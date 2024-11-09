@@ -56,6 +56,7 @@ fun ChangePasswordScreen(navController: NavController) {
     )
 }
 
+
 @Composable
 fun ChangePasswordContent(
     currentPassword: String,

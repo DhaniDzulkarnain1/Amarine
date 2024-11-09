@@ -154,7 +154,7 @@ fun EditProfileContent(
             MyTextField(
                 value = placeDateOfBirth,
                 onValueChange = onPlaceDateOfBirthChange,
-                placeholder = { Text(text = "Tempat Tanggal Lahir") },
+                placeholder = { Text(text = "Tanggal Lahir") },
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Rounded.CalendarToday,

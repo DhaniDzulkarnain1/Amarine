@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -111,7 +112,7 @@ fun AddNoteContent(
 
                     OutlinedTextField(
                         value = "",
-                        label = { Text(text = "Berat") },
+                        label = { Text(text = "Berat (Kg)") },
                         onValueChange = { weight.value = it},
                         modifier = Modifier
                             .background(Color.White, MaterialTheme.shapes.medium)
@@ -141,13 +142,31 @@ fun AddNoteContent(
 
                     OutlinedTextField(
                         value = "",
-                        label = { Text(text = "Catatan") },
+                        label = { Text(text = "Catatan (Opsional)") },
                         onValueChange = { noteType.value = it},
                         modifier = Modifier
                             .background(Color.White, MaterialTheme.shapes.medium)
                             .padding(8.dp)
                             .fillMaxWidth()
                     )
+
+                    OutlinedTextField(
+                        value = "",
+                        label = { Text(text = "Masukkan Gambar") },
+                        onValueChange = { noteType.value = it},
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Image,
+                                contentDescription = "Icon Gambar",
+                                tint = Color.Gray
+                            )
+                        },
+                        modifier = Modifier
+                            .background(Color.White, MaterialTheme.shapes.medium)
+                            .padding(8.dp)
+                            .fillMaxWidth()
+                    )
+
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier

@@ -30,7 +30,7 @@ val member = listOf(
     Member(
         id = 2,
         imageResourceId = R.drawable.ic_profile_2,
-        name = "Yanto",
+        name = "Bahrul",
         birthDate = "02 Oktober 1989",
         phoneNumber = "085642875902",
         email = "yantobandung@gmail.com",

@@ -19,7 +19,7 @@ data class Note(
 val notes = listOf(
     Note(
         id = 0,
-        imageResourceId = R.drawable.ic_note_1,
+        imageResourceId = R.drawable.ic_note_4,
         name = "Kepiting",
         type = "Kepiting Galah",
         weight = "10 Kg",
@@ -29,7 +29,7 @@ val notes = listOf(
     ),
     Note(
         id = 1,
-        imageResourceId = R.drawable.ic_note_2,
+        imageResourceId = R.drawable.ic_note_5,
         name = "Kerapu",
         type = "Kerapu Cantang",
         weight = "8 Kg",
@@ -39,7 +39,7 @@ val notes = listOf(
     ),
     Note(
         id = 2,
-        imageResourceId = R.drawable.ic_note_3,
+        imageResourceId = R.drawable.ic_note_6,
         name = "Kepiting",
         type = "Kepiting Biru",
         weight = "9 Kg",

@@ -194,9 +194,9 @@ private fun HomeContentPreview() {
             userImageUrl = null,
             searchQuery = "",
             itemsPictureRes = listOf(
-                R.drawable.image_home_1,
-                R.drawable.image_home_2,
-                R.drawable.image_home_3,
+                R.drawable.ic_image_carousel_1,
+                R.drawable.ic_image_carousel_2,
+                R.drawable.ic_image_carousel_3,
             ),
             onQueryChange = {},
             articles = listOf(),

@@ -4,28 +4,14 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,16 +32,18 @@ import com.app.amarine.ui.components.MyTopAppBar
 import com.app.amarine.ui.navigation.Screen
 import com.app.amarine.ui.theme.AmarineTheme
 import com.app.amarine.ui.theme.TextFieldContainerColor
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    var query by remember {
-        mutableStateOf("")
-    }
+    var query by remember { mutableStateOf("") }
     val itemsPictureRes = listOf(
-        R.drawable.image_home_1,
-        R.drawable.image_home_2,
-        R.drawable.image_home_3,
+        R.drawable.ic_image_carousel_1,
+        R.drawable.ic_image_carousel_2,
+        R.drawable.ic_image_carousel_3,
     )
 
     HomeContent(
@@ -75,6 +63,7 @@ fun HomeScreen(navController: NavController) {
     )
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun HomeContent(
     name: String?,
@@ -87,6 +76,17 @@ fun HomeContent(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val pagerState = rememberPagerState()
+
+    // Automatic scrolling
+    LaunchedEffect(pagerState) {
+        while (true) {
+            delay(25000L) // 25 detik
+            val nextPage = (pagerState.currentPage + 1) % itemsPictureRes.size
+            pagerState.animateScrollToPage(nextPage)
+        }
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -96,14 +96,17 @@ fun HomeContent(
         }
     ) { contentPadding ->
         LazyColumn(
-            modifier = Modifier.padding(contentPadding),
+            modifier = Modifier
+                .padding(contentPadding)
+                .padding(top = 16.dp), // Menambahkan padding atas
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
+                // Bagian profil
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -130,7 +133,7 @@ fun HomeContent(
                 MySearchBar(
                     value = searchQuery,
                     onValueChange = onQueryChange,
-                    placeholder = { Text(text = "Type here...") },
+                    placeholder = { Text(text = "Ketik Disini...") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -138,35 +141,36 @@ fun HomeContent(
             }
             item {
                 AnimatedVisibility(visible = searchQuery.isEmpty()) {
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                    ) {
-                        items(items = itemsPictureRes) {
-                            Image(
-                                painter = painterResource(id = it),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .width(296.dp)
-                                    .height(154.dp)
-                                    .clip(MaterialTheme.shapes.large)
-                                    .border(1.dp, TextFieldContainerColor, MaterialTheme.shapes.large)
-                            )
-                        }
+                    HorizontalPager(
+                        count = itemsPictureRes.size,
+                        state = pagerState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(horizontal = 16.dp)
+                    ) { page ->
+                        Image(
+                            painter = painterResource(id = itemsPictureRes[page]),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.large)
+                                .border(1.dp, TextFieldContainerColor, MaterialTheme.shapes.large)
+                        )
                     }
                 }
             }
             item {
-                Column {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Panduan dan Artikel",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.ExtraBold,
-                        ),
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        )
                     )
                 }
             }

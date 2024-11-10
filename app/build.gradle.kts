@@ -57,7 +57,6 @@ android {
 }
 
 dependencies {
-
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.5")
     implementation("androidx.activity:activity-compose:1.9.2")
@@ -86,23 +85,26 @@ dependencies {
 
     implementation("com.google.accompanist:accompanist-flowlayout:0.27.0")
 
-    //Dagger - Hilt
+    // Dagger - Hilt
     implementation("com.google.dagger:hilt-android:2.49")
     kapt("com.google.dagger:hilt-android-compiler:2.49")
     kapt("androidx.hilt:hilt-compiler:1.2.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
-    //Material-Icon
+    // Material-Icon
     implementation("androidx.compose.material:material-icons-extended")
 
-    //Retrofit
+    // Retrofit
     implementation("com.google.guava:guava:32.1.3-android")
     implementation("androidx.compose.ui:ui-util")
     implementation("androidx.compose.foundation:foundation")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
 
+    // Accompanist dependencies
     implementation("com.google.accompanist:accompanist-permissions:0.23.1")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.23.1")
+    implementation("com.google.accompanist:accompanist-pager:0.28.0")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")
 
     implementation("com.exyte:animated-navigation-bar:1.0.0")
 }

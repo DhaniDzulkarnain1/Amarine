@@ -167,7 +167,7 @@ fun HomeContent(
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Panduan dan Artikel",
+                        text = "Panduan",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.ExtraBold,
                         )

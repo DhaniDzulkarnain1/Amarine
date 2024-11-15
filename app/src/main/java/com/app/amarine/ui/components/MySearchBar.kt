@@ -71,6 +71,6 @@ fun MySearchBar(
 @Composable
 private fun MySearchBarPreview() {
     AmarineTheme {
-        MySearchBar(value = "", onValueChange = {}, placeholder = { Text(text = "Type here...") })
+        MySearchBar(value = "", onValueChange = {}, placeholder = { Text(text = "Ketik Disini...") })
     }
 }

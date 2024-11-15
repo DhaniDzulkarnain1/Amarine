@@ -1,27 +1,53 @@
 package com.app.amarine
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.get
-import com.app.amarine.ui.navigation.BottomNavigationItem
-import com.app.amarine.ui.navigation.Screen
-import com.app.amarine.ui.theme.Primary
+
+@Composable
+fun AppNavHost(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    startDestination: String = Screen.Home.route
+) {
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        modifier = modifier
+    ) {
+        composable(Screen.Home.route) {
+            HomeScreen()
+        }
+        composable(Screen.Catatan.route) {
+            CatatanScreen()
+        }
+        composable(Screen.Stock.route) {
+            StockScreen()
+        }
+        composable(Screen.Anggota.route) {
+            AnggotaScreen()
+        }
+    }
+}
 
 @Composable
 fun AmarineApp(
@@ -31,16 +57,15 @@ fun AmarineApp(
     val currentDestination = currentBackStackEntry?.destination
     val shouldShowBottomBar = when (currentDestination?.route) {
         Screen.Home.route, Screen.Catatan.route,
-        Screen.Stock.route, Screen.Anggota.route, -> true
+        Screen.Stock.route, Screen.Anggota.route -> true
         else -> false
     }
 
     Scaffold(
         bottomBar = {
-            if (!shouldShowBottomBar) {
-                return@Scaffold
+            if (shouldShowBottomBar) {
+                AnimatedBottomBar(navController)
             }
-            BottomBar(navController = navController, currentDestination = currentDestination)
         }
     ) { innerPadding ->
         AppNavHost(
@@ -51,61 +76,134 @@ fun AmarineApp(
 }
 
 @Composable
-fun BottomBar(
+fun AnimatedBottomBar(
     navController: NavController,
-    currentDestination: NavDestination?,
-    modifier: Modifier = Modifier,
 ) {
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = currentBackStackEntry?.destination
+    val currentRoute = currentDestination?.route
     val items = listOf(
-        BottomNavigationItem(
-            title = "Home",
-            icon = ImageVector.vectorResource(id = R.drawable.ic_home),
-            screen = Screen.Home,
-        ),
-        BottomNavigationItem(
-            title = "Catatan",
-            icon = ImageVector.vectorResource(id = R.drawable.ic_catatan),
-            screen = Screen.Catatan,
-        ),
-        BottomNavigationItem(
-            title = "Stock",
-            icon = ImageVector.vectorResource(id = R.drawable.ic_stock),
-            screen = Screen.Stock,
-        ),
-        BottomNavigationItem(
-            title = "Anggota",
-            icon = ImageVector.vectorResource(id = R.drawable.ic_anggota),
-            screen = Screen.Anggota,
-        ),
+        BottomNavItem("Beranda", R.drawable.ic_home, Screen.Home),
+        BottomNavItem("Catatan", R.drawable.ic_catatan, Screen.Catatan),
+        BottomNavItem("Stok", R.drawable.ic_stock, Screen.Stock),
+        BottomNavItem("Anggota", R.drawable.ic_anggota, Screen.Anggota)
     )
-    NavigationBar(
-        modifier = modifier,
-        containerColor = Primary,
+
+    var selectedIndex by remember {
+        mutableIntStateOf(
+            items.indexOfFirst { it.screen.route == currentRoute }.takeIf { it >= 0 } ?: 0
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(65.dp)
+            .background(Color(0xFFF15A29))
     ) {
-        items.map { item ->
-            NavigationBarItem(
-                selected = currentDestination?.route == item.screen.route,
-                onClick = {
-                    navController.navigate(item.screen.route) {
-                        popUpTo(navController.graph[Screen.Home.route].id) {
-                            saveState = true
-                        }
-                        restoreState = true
-                        launchSingleTop = true
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(70.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            items.forEachIndexed { index, item ->
+                val isSelected = selectedIndex == index
+                val interactionSource = remember { MutableInteractionSource() }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = null
+                        ) {
+                            selectedIndex = index
+                            navController.navigate(item.screen.route) {
+                                popUpTo(Screen.Home.route) {
+                                    saveState = true
+                                }
+                                restoreState = true
+                                launchSingleTop = true
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = item.iconResId),
+                            contentDescription = item.label,
+                            tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = item.label,
+                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            maxLines = 1
+                        )
                     }
-                },
-                icon = {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = null
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = Color.White,
-                    unselectedIconColor = Color.White,
-                    selectedIconColor = Color.Black
-                )
-            )
+                }
+            }
         }
     }
+}
+
+@Composable
+fun HomeScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Home Screen")
+    }
+}
+
+@Composable
+fun CatatanScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Catatan Screen")
+    }
+}
+
+@Composable
+fun StockScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Stock Screen")
+    }
+}
+
+@Composable
+fun AnggotaScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Anggota Screen")
+    }
+}
+
+data class BottomNavItem(
+    val label: String,
+    val iconResId: Int,
+    val screen: Screen,
+)
+
+sealed class Screen(val route: String) {
+    object Home : Screen("home")
+    object Catatan : Screen("catatan")
+    object Stock : Screen("stock")
+    object Anggota : Screen("anggota")
 }

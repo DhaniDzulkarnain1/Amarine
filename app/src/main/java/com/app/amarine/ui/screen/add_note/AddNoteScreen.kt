@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -110,7 +109,6 @@ fun AddNoteContent(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .shadow(elevation = 2.dp, shape = MaterialTheme.shapes.large)
                     .background(CardBackground, MaterialTheme.shapes.large)
                     .fillMaxWidth()
             ) {
@@ -174,7 +172,6 @@ fun AddNoteContent(
                                 color = TextFieldBorder.copy(alpha = 0.3f),
                                 shape = MaterialTheme.shapes.medium
                             )
-                            .shadow(1.dp)
                             .clickable { datePickerDialog.show() },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = TextFieldBorder,
@@ -253,15 +250,11 @@ fun AddNoteContent(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ElevatedButton(
+                FilledTonalButton(
                     onClick = onNavigateUp,
-                    colors = ButtonDefaults.elevatedButtonColors(
+                    colors = ButtonDefaults.filledTonalButtonColors(
                         containerColor = ErrorRed,
                         contentColor = Color.White
-                    ),
-                    elevation = ButtonDefaults.elevatedButtonElevation(
-                        defaultElevation = 0.dp,
-                        pressedElevation = 2.dp
                     ),
                     modifier = Modifier.height(40.dp)
                 ) {
@@ -273,7 +266,7 @@ fun AddNoteContent(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                ElevatedButton(
+                FilledTonalButton(
                     onClick = {
                         nameError = name.isEmpty()
                         typeError = type.isEmpty()
@@ -285,13 +278,9 @@ fun AddNoteContent(
                             onNavigateUp()
                         }
                     },
-                    colors = ButtonDefaults.elevatedButtonColors(
+                    colors = ButtonDefaults.filledTonalButtonColors(
                         containerColor = BrandOrange,
                         contentColor = Color.White
-                    ),
-                    elevation = ButtonDefaults.elevatedButtonElevation(
-                        defaultElevation = 0.dp,
-                        pressedElevation = 2.dp
                     ),
                     modifier = Modifier.height(40.dp)
                 ) {
@@ -330,8 +319,7 @@ private fun CustomTextField(
                         else -> TextFieldBorder.copy(alpha = 0.3f)
                     },
                     shape = MaterialTheme.shapes.medium
-                )
-                .shadow(1.dp),
+                ),
             isError = isError,
             shape = MaterialTheme.shapes.medium,
             colors = OutlinedTextFieldDefaults.colors(

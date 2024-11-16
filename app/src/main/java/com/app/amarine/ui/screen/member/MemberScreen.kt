@@ -66,7 +66,7 @@ fun MemberContent(
         modifier = modifier,
         topBar = {
             MyTopAppBar(
-                title = "Anggota",
+                title = "Amarine",
             )
         }
     ) { contentPadding ->

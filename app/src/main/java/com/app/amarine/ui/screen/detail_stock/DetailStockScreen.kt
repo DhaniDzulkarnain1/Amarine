@@ -1,18 +1,18 @@
 package com.app.amarine.ui.screen.detail_stock
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,10 +27,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.app.amarine.model.DetailStock
 import com.app.amarine.model.Stock
 import com.app.amarine.ui.components.MyTopAppBar
-import com.app.amarine.ui.screen.detail_member.DetailMemberContent
-import com.app.amarine.ui.theme.AmarineTheme
 import com.app.amarine.ui.theme.Primary200
 
 @Composable
@@ -38,6 +37,21 @@ fun DetailStockScreen(
     stock: Stock?,
     navController: NavController
 ) {
+    if (stock == null) {
+        // Log jika stok tidak ditemukan
+        Log.d("DetailStockScreen", "Stock is null. Data not found!")
+        // Tampilkan pesan error jika stok tidak ditemukan
+        Text(
+            text = "Data stok tidak ditemukan",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(16.dp)
+        )
+        return
+    }
+
+    // Log jika stok ditemukan
+    Log.d("DetailStockScreen", "Displaying stock: $stock")
+
     DetailStockContent(
         stock = stock,
         onNavigateUp = { navController.navigateUp() }
@@ -46,7 +60,7 @@ fun DetailStockScreen(
 
 @Composable
 fun DetailStockContent(
-    stock: Stock?,
+    stock: Stock,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -54,19 +68,18 @@ fun DetailStockContent(
         modifier = modifier,
         topBar = {
             MyTopAppBar(
-                title = "Detail Stock",
+                title = "Detail Stok",
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
                         Icon(
                             imageVector = Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = null,
+                            contentDescription = "Kembali",
                         )
                     }
                 },
             )
         }
     ) { contentPadding ->
-
         val scrollState = rememberScrollState()
 
         Column(
@@ -77,96 +90,102 @@ fun DetailStockContent(
                 .padding(16.dp)
                 .verticalScroll(scrollState)
         ) {
-
+            // Menampilkan jenis stok
             Text(
-                text = "${stock?.type}",
+                text = stock.type,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold
                 )
             )
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier
-                    .background(Primary200, MaterialTheme.shapes.large)
-                    .fillMaxSize()
-                    .padding(bottom = 16.dp)
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
-
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(8.dp)
+                Column(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Tanggal",
-                        textAlign = TextAlign.Center,
+                    // Header tabel
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .weight(1f)
-                    )
-                    Text(
-                        text = "Masuk (Kg)",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                    )
-                    Text(
-                        text = "Terjual (Kg)",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                    )
-                    Text(
-                        text = "Total Stok",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                    )
-                }
-
-                stock?.detail?.forEachIndexed { index, stock ->
-                    Column {
-
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(8.dp)
-                        ) {
-                            Text(
-                                text = (stock.date),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .weight(1f)
-                            )
-                            Text(
-                                text = stock.enter.toString(),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .weight(1f)
-                            )
-                            Text(
-                                text = stock.sold.toString(),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .weight(1f)
-                            )
-                            Text(
-                                text = stock.available.toString(),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .weight(1f)
-                            )
-                        }
-
-                        Spacer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .size(1.dp)
-                                .background(Color.Black)
+                            .fillMaxWidth()
+                            .background(Primary200)
+                            .padding(vertical = 12.dp, horizontal = 16.dp)
+                    ) {
+                        Text(
+                            text = "Tanggal",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1.2f),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleSmall
                         )
+                        Text(
+                            text = "Masuk",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = "Terjual",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = "Total Stok",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+
+                    // Konten tabel
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        stock.detail.forEachIndexed { index, detail ->
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(if (index % 2 == 0) Color.White else Color(0xFFF8F8F8))
+                                    .padding(vertical = 12.dp, horizontal = 16.dp)
+                            ) {
+                                Text(
+                                    text = detail.date,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.weight(1.2f),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "${detail.enter} Kg",
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "${detail.sold} Kg",
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "${detail.available} Kg",
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -177,7 +196,34 @@ fun DetailStockContent(
 @Preview(showBackground = true)
 @Composable
 private fun DetailStockContentPreview() {
-    AmarineTheme {
-        DetailStockContent(stock = null, onNavigateUp = { /*TODO*/ })
+    MaterialTheme {
+        DetailStockContent(
+            stock = Stock(
+                id = 0,
+                type = "Ikan Nila",
+                available = 15,
+                detail = listOf(
+                    DetailStock(
+                        date = "7-11-2024",
+                        enter = 30,
+                        sold = 15,
+                        available = 15
+                    ),
+                    DetailStock(
+                        date = "9-11-2024",
+                        enter = 20,
+                        sold = 10,
+                        available = 25
+                    ),
+                    DetailStock(
+                        date = "10-11-2024",
+                        enter = 0,
+                        sold = 12,
+                        available = 13
+                    )
+                )
+            ),
+            onNavigateUp = {}
+        )
     }
 }

@@ -8,7 +8,7 @@ data class Stock(
     val id: Int,
     val type: String,
     val detail: List<DetailStock>,
-    val available: Int = detail.last().available
+    val available: Int = if (detail.isNotEmpty()) detail.last().available else 0 // Fallback untuk daftar kosong
 ) : Parcelable
 
 @Parcelize
@@ -140,5 +140,4 @@ val stocks = listOf(
             ),
         )
     ),
-
 )

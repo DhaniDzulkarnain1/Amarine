@@ -2,7 +2,9 @@ package com.app.amarine.ui.screen.login
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +21,6 @@ import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -111,7 +112,6 @@ fun LoginContent(
             contentDescription = null,
             contentScale = ContentScale.FillWidth,
             modifier = Modifier.fillMaxWidth()
-
         )
         Text(
             text = "Masuk",
@@ -194,18 +194,35 @@ fun LoginContent(
                 modifier = Modifier.weight(1f),
             )
         }
-        Spacer(modifier = Modifier.height(48.dp))
-        Image(
-            painter = painterResource(id = R.drawable.ic_button_google),
-            contentDescription = null,
-            contentScale = ContentScale.FillWidth,
+        Spacer(modifier = Modifier.height(24.dp))
+        // Modified Google Sign-In Button
+        Row(
             modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .width(72.dp)
-                .clickable(
-                    onClick = onGoogleClick
+                .padding(horizontal = 24.dp)
+                .fillMaxWidth()
+                .height(48.dp)
+                .clickable(onClick = onGoogleClick)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                    shape = MaterialTheme.shapes.medium
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_google),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "Lanjutkan dengan Google",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold
                 )
-        )
+            )
+        }
         Spacer(modifier = Modifier.weight(1f))
         Row(
             modifier = Modifier

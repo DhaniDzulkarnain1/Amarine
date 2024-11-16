@@ -106,7 +106,7 @@ fun MemberContent(
                 MySearchBar(
                     value = searchQuery,
                     onValueChange = onQueryChange,
-                    placeholder = { Text(text = "Type here...") },
+                    placeholder = { Text(text = "Ketik Disini...") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)

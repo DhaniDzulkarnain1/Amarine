@@ -25,7 +25,7 @@ val member = listOf(
         phoneNumber = "082215456987",
         email = "burhankeren@gmail.com",
         address = "Riau",
-        status = "Nelayan"
+        status = "Pengepul"
     ),
     Member(
         id = 2,
@@ -35,7 +35,7 @@ val member = listOf(
         phoneNumber = "085642875902",
         email = "yantobandung@gmail.com",
         address = "Bandung",
-        status = "Pengepul"
+        status = "Nelayan"
     ),
     Member(
         id = 3,
@@ -65,6 +65,6 @@ val member = listOf(
         phoneNumber = "085587878900",
         email = "udinnnn102@gmail.com",
         address = "Kediri",
-        status = "Pengepul"
+        status = "Nelayan"
     ),
 )

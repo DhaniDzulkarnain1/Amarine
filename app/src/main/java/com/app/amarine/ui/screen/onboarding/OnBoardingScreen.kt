@@ -54,8 +54,8 @@ fun OnBoardingScreen(
         ),
         OnBoardingData(
             image = R.drawable.image_onboarding_2,
-            title = "Temukan Panduan dan Artikel Terbaik",
-            description = "Panduan dan artikel informatif untuk membantu meningkatkan produktivitas Anda",
+            title = "Temukan Panduan Terbaik",
+            description = "Panduan informatif untuk membantu meningkatkan produktivitas Anda",
         )
     )
 

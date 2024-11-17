@@ -6,15 +6,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -35,10 +31,7 @@ fun DetailArticleScreen(
 ) {
     DetailArticleContent(
         article = article,
-        onNavigateUp = { navController.navigateUp() },
-        onFavoriteClick = { newState ->
-            article?.isFavorite = newState
-        }
+        onNavigateUp = { navController.navigateUp() }
     )
 }
 
@@ -46,13 +39,8 @@ fun DetailArticleScreen(
 fun DetailArticleContent(
     article: Article?,
     onNavigateUp: () -> Unit,
-    onFavoriteClick: (newState: Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isFavorite by rememberSaveable {
-        mutableStateOf(article?.isFavorite ?: false)
-    }
-
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -63,21 +51,6 @@ fun DetailArticleContent(
                         Icon(
                             imageVector = Icons.Rounded.ArrowBackIosNew,
                             contentDescription = null,
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            onFavoriteClick(!isFavorite)
-                            isFavorite = !isFavorite
-                        }
-                    ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                            contentDescription = null,
-                            tint = if (isFavorite) Color.Red else Color.White,
-                            modifier = Modifier
                         )
                     }
                 }

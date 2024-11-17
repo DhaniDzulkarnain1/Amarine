@@ -32,7 +32,6 @@ import com.app.amarine.ui.navigation.Screen
 
 @Composable
 fun NoteScreen(navController: NavController) {
-
     var query by remember {
         mutableStateOf("")
     }
@@ -47,7 +46,6 @@ fun NoteScreen(navController: NavController) {
             navController.navigate(Screen.DetailNote.route)
         }
     )
-
 }
 
 @Composable
@@ -55,11 +53,10 @@ fun NoteContent(
     note: List<Note>,
     searchQuery: String,
     onQueryChange: (String) -> Unit,
-    onAddNote : () -> Unit,
+    onAddNote: () -> Unit,
     onDetailClick: (Note) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -79,9 +76,10 @@ fun NoteContent(
             )
         }
     ) { contentPadding ->
-
         LazyColumn(
-            modifier = Modifier.padding(contentPadding),
+            modifier = Modifier
+                .padding(contentPadding)
+                .padding(top = 16.dp),  // Tambahkan padding top untuk seluruh konten
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -92,6 +90,7 @@ fun NoteContent(
                     ),
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
+                        .padding(top = 8.dp)  // Tambahkan padding top untuk judul
                 )
             }
 

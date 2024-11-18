@@ -1,6 +1,5 @@
 package com.app.amarine.ui.screen.profile
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.ModeEdit
 import androidx.compose.material.icons.outlined.Security
@@ -25,7 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -116,11 +113,6 @@ fun ProfileContent(
                             imageVector = Icons.Rounded.KeyboardArrowRight,
                             contentDescription = null,
                         )
-//                        Icon(
-//                            imageVector = if (user.isKtpVerified) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
-//                            contentDescription = null,
-//                            tint = if (user.isKtpVerified) Color.Green else Color.Red
-//                        )
                     },
                     onClick = onEditProfileClick
                 )

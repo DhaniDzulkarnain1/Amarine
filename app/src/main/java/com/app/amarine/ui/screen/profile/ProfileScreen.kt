@@ -117,11 +117,6 @@ fun ProfileContent(
                             imageVector = Icons.Rounded.KeyboardArrowRight,
                             contentDescription = null,
                         )
-//                        Icon(
-//                            imageVector = if (user.isKtpVerified) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
-//                            contentDescription = null,
-//                            tint = if (user.isKtpVerified) Color.Green else Color.Red
-//                        )
                     },
                     onClick = onEditProfileClick
                 )

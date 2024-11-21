@@ -1,5 +1,6 @@
 package com.app.amarine.ui.screen.register
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -14,11 +15,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,24 +41,92 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.app.amarine.R
+import com.app.amarine.RetrofitClient
+import com.app.amarine.model.RegisterRequest
+import com.app.amarine.model.RegisterResponse
 import com.app.amarine.ui.components.MyPrimaryButton
 import com.app.amarine.ui.components.MyTextField
-import com.app.amarine.ui.theme.Error
 import com.app.amarine.ui.theme.Primary
 
 @Composable
 fun RegisterScreen(navController: NavController) {
-    var email by rememberSaveable {
-        mutableStateOf("")
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showSuccessDialog by remember { mutableStateOf(false) }
+
+    // Dialog sukses
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showSuccessDialog = false
+                navController.navigate("login") {
+                    popUpTo("register") { inclusive = true }
+                }
+            },
+            title = { Text("Berhasil") },
+            text = { Text("Pendaftaran berhasil! Silahkan login.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSuccessDialog = false
+                    navController.navigate("login") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                }) {
+                    Text("OK")
+                }
+            }
+        )
     }
-    var name by rememberSaveable {
-        mutableStateOf("")
-    }
-    var password by rememberSaveable {
-        mutableStateOf("")
-    }
-    var confirmPassword by rememberSaveable {
-        mutableStateOf("")
+
+    val onRegisterClick: () -> Unit = {
+        // Reset error message
+        errorMessage = null
+
+        when {
+            name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
+                errorMessage = "Semua field harus diisi!"
+                Log.e("RegisterScreen", "Validasi gagal: Semua field harus diisi!")
+            }
+            password != confirmPassword -> {
+                errorMessage = "Password dan Konfirmasi Password tidak cocok!"
+                Log.e("RegisterScreen", "Validasi gagal: Password tidak cocok!")
+            }
+            else -> {
+                // Hanya kirim email, password, dan nama (tanpa role)
+                val registerRequest = RegisterRequest(
+                    email = email,
+                    password = password,
+                    nama = name
+                )
+                val call = RetrofitClient.instance.register(registerRequest)
+
+                call.enqueue(object : retrofit2.Callback<RegisterResponse> {
+                    override fun onResponse(
+                        call: retrofit2.Call<RegisterResponse>,
+                        response: retrofit2.Response<RegisterResponse>
+                    ) {
+                        Log.d("RegisterScreen", "Response Code: ${response.code()}")
+                        Log.d("RegisterScreen", "Error Body: ${response.errorBody()?.string()}")
+                        Log.d("RegisterScreen", "URL Called: ${call.request().url}")
+
+                        if (response.isSuccessful) {
+                            showSuccessDialog = true
+                        } else {
+                            errorMessage = "Gagal mendaftar: ${response.message()}"
+                            Log.e("RegisterScreen", "Gagal mendaftar: ${response.message()}")
+                        }
+                    }
+
+                    override fun onFailure(call: retrofit2.Call<RegisterResponse>, t: Throwable) {
+                        errorMessage = "Error: ${t.message}"
+                        Log.e("RegisterScreen", "Error: ${t.message}")
+                    }
+                })
+            }
+        }
     }
 
     RegisterContent(
@@ -65,12 +134,17 @@ fun RegisterScreen(navController: NavController) {
         name = name,
         password = password,
         confirmPassword = confirmPassword,
+        errorMessage = errorMessage,
         onEmailChange = { email = it },
         onNameChange = { name = it },
         onPasswordChange = { password = it },
         onConfirmPasswordChange = { confirmPassword = it },
-        onRegisterClick = {  },
-        onLoginClick = { navController.navigateUp() }
+        onRegisterClick = onRegisterClick,
+        onLoginClick = {
+            navController.navigate("login") {
+                popUpTo("register") { inclusive = true }
+            }
+        }
     )
 }
 
@@ -80,20 +154,17 @@ fun RegisterContent(
     name: String,
     password: String,
     confirmPassword: String,
+    errorMessage: String?,
     onEmailChange: (String) -> Unit,
     onNameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onRegisterClick: () -> Unit,
     onLoginClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
-    var passwordVisible by remember {
-        mutableStateOf(false)
-    }
-    var confirmPasswordVisible by remember {
-        mutableStateOf(false)
-    }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    var confirmPasswordVisible by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = modifier.fillMaxSize(),
@@ -101,11 +172,11 @@ fun RegisterContent(
     ) {
         Image(
             imageVector = ImageVector.vectorResource(id = R.drawable.bg_image_register),
-            contentDescription = null,
+            contentDescription = "Register Background",
             contentScale = ContentScale.FillWidth,
             modifier = Modifier.fillMaxWidth()
-
         )
+
         Text(
             text = "Daftar",
             style = MaterialTheme.typography.titleMedium.copy(
@@ -113,46 +184,57 @@ fun RegisterContent(
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 18.sp
             ),
-            modifier = Modifier
+            modifier = Modifier.padding(top = 16.dp)
         )
+
+        // Error message if any
+        errorMessage?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
+
+        // Email field
         MyTextField(
             value = email,
             onValueChange = onEmailChange,
             placeholder = { Text(text = "Email") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email
-            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Name field
         MyTextField(
             value = name,
             onValueChange = onNameChange,
             placeholder = { Text(text = "Nama Lengkap") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text
-            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Password field
         MyTextField(
             value = password,
             onValueChange = onPasswordChange,
             placeholder = { Text(text = "Kata Sandi") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password
-            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = if (!passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             trailingIcon = {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         imageVector = if (passwordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                        contentDescription = null
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
                     )
                 }
             },
@@ -161,19 +243,19 @@ fun RegisterContent(
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Confirm Password field
         MyTextField(
             value = confirmPassword,
             onValueChange = onConfirmPasswordChange,
             placeholder = { Text(text = "Konfirmasi Kata Sandi") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password
-            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = if (!confirmPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             trailingIcon = {
                 IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                     Icon(
                         imageVector = if (confirmPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                        contentDescription = null
+                        contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password"
                     )
                 }
             },
@@ -182,6 +264,8 @@ fun RegisterContent(
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(48.dp))
+
+        // Register Button
         MyPrimaryButton(
             text = "Daftar",
             onClick = onRegisterClick,
@@ -189,7 +273,10 @@ fun RegisterContent(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
         )
+
         Spacer(modifier = Modifier.weight(1f))
+
+        // Login Link
         Row(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
@@ -207,9 +294,7 @@ fun RegisterContent(
                     color = Primary,
                     fontWeight = FontWeight.Bold
                 ),
-                modifier = Modifier.clickable(
-                    onClick = onLoginClick
-                )
+                modifier = Modifier.clickable(onClick = onLoginClick)
             )
         }
     }

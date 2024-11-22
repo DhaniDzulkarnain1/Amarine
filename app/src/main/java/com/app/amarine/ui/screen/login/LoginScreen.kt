@@ -1,5 +1,6 @@
 package com.app.amarine.ui.screen.login
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -46,6 +47,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.app.amarine.R
+import com.app.amarine.RetrofitClient
+import com.app.amarine.model.LoginRequest
+import com.app.amarine.model.LoginResponse
 import com.app.amarine.ui.components.MyPrimaryButton
 import com.app.amarine.ui.components.MyTextField
 import com.app.amarine.ui.navigation.Screen
@@ -56,14 +60,10 @@ import com.app.amarine.ui.theme.Primary
 @Composable
 fun LoginScreen(
     navController: NavController,
-    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+//    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
-    var email by rememberSaveable {
-        mutableStateOf("")
-    }
-    var password by rememberSaveable {
-        mutableStateOf("")
-    }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     val context = LocalContext.current
 
     LoginContent(
@@ -72,21 +72,66 @@ fun LoginScreen(
         onEmailChange = { email = it },
         onPasswordChange = { password = it },
         onLoginClick = {
-            navController.navigate(Screen.Home.route)
+            var errorMessage: String? = null
+
+            when {
+                email.isBlank() || password.isBlank() -> {
+                    errorMessage = "Email dan password harus diisi!"
+                    Log.e("LoginScreen", "Validasi gagal: Email dan password harus diisi!")
+                }
+                else -> {
+                    val loginRequest = LoginRequest(
+                        email = email,
+                        password = password
+                    )
+                    val call = RetrofitClient.instance.login(loginRequest)
+
+                    call.enqueue(object : retrofit2.Callback<LoginResponse> {
+                        override fun onResponse(
+                            call: retrofit2.Call<LoginResponse>,
+                            response: retrofit2.Response<LoginResponse>
+                        ) {
+                            Log.d("LoginScreen", "Response Code: ${response.code()}")
+                            Log.d("LoginScreen", "Error Body: ${response.errorBody()?.string()}")
+                            Log.d("LoginScreen", "URL Called: ${call.request().url}")
+
+                            if (response.isSuccessful) {
+                                // Login berhasil
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                }
+                                Toast.makeText(context, "Login berhasil!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                errorMessage = "Login gagal: ${response.message()}"
+                                Log.e("LoginScreen", "Login gagal: ${response.message()}")
+                            }
+                        }
+
+                        override fun onFailure(call: retrofit2.Call<LoginResponse>, t: Throwable) {
+                            errorMessage = "Error: ${t.message}"
+                            Log.e("LoginScreen", "Error: ${t.message}")
+                        }
+                    })
+                }
+            }
         },
         onForgotPasswordClick = {
             navController.navigate(Screen.ForgotPassword.route)
         },
-        onRegisterClick = { navController.navigate(Screen.Register.route) },
-        onGoogleClick = {
-            try {
-                viewModel.signInGoogle(context)
-            } catch (e: Exception) {
-                Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
-            }
+        onRegisterClick = {
+            navController.navigate(Screen.Register.route)
         },
+        onGoogleClick = {
+//            try {
+//                viewModel.signInGoogle(context)
+//            } catch (e: Exception) {
+//                Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
+//            }
+        },
+//        errorMessage = errorMessage
     )
 }
+
 
 @Composable
 fun LoginContent(
@@ -123,6 +168,8 @@ fun LoginContent(
             modifier = Modifier
         )
         Spacer(modifier = Modifier.height(32.dp))
+
+        // Kol Email
         MyTextField(
             value = email,
             onValueChange = onEmailChange,
@@ -135,6 +182,8 @@ fun LoginContent(
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Kol PassWord
         MyTextField(
             value = password,
             onValueChange = onPasswordChange,
@@ -170,6 +219,8 @@ fun LoginContent(
                 )
         )
         Spacer(modifier = Modifier.height(32.dp))
+
+        //TOMBOLLLLL BUATTTT MASUKKKKKKKKK
         MyPrimaryButton(
             text = "Masuk",
             onClick = onLoginClick,

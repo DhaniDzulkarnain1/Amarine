@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,28 +56,33 @@ import com.app.amarine.ui.navigation.Screen
 import com.app.amarine.ui.theme.AmarineTheme
 import com.app.amarine.ui.theme.Error
 import com.app.amarine.ui.theme.Primary
+import org.json.JSONObject
 
 @Composable
 fun LoginScreen(
     navController: NavController,
-//    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     LoginContent(
         email = email,
         password = password,
+        errorMessage = errorMessage,
+        isLoading = isLoading,
         onEmailChange = { email = it },
         onPasswordChange = { password = it },
         onLoginClick = {
-            var errorMessage: String? = null
+            errorMessage = null
+            isLoading = true
 
             when {
                 email.isBlank() || password.isBlank() -> {
                     errorMessage = "Email dan password harus diisi!"
-                    Log.e("LoginScreen", "Validasi gagal: Email dan password harus diisi!")
+                    isLoading = false
                 }
                 else -> {
                     val loginRequest = LoginRequest(
@@ -91,25 +96,39 @@ fun LoginScreen(
                             call: retrofit2.Call<LoginResponse>,
                             response: retrofit2.Response<LoginResponse>
                         ) {
+                            isLoading = false
                             Log.d("LoginScreen", "Response Code: ${response.code()}")
-                            Log.d("LoginScreen", "Error Body: ${response.errorBody()?.string()}")
-                            Log.d("LoginScreen", "URL Called: ${call.request().url}")
+                            Log.d("LoginScreen", "Raw Response: ${response.raw()}")
+
+                            val errorBody = response.errorBody()?.string()
+                            Log.d("LoginScreen", "Error Body: $errorBody")
 
                             if (response.isSuccessful) {
-                                // Login berhasil
                                 navController.navigate(Screen.Home.route) {
                                     popUpTo(Screen.Login.route) { inclusive = true }
                                 }
                                 Toast.makeText(context, "Login berhasil!", Toast.LENGTH_SHORT).show()
                             } else {
-                                errorMessage = "Login gagal: ${response.message()}"
-                                Log.e("LoginScreen", "Login gagal: ${response.message()}")
+                                try {
+                                    if (errorBody != null) {
+                                        val errorJson = JSONObject(errorBody)
+                                        errorMessage = errorJson.getString("error")
+                                        Log.d("LoginScreen", "Parsed Error Message: $errorMessage")
+                                    } else {
+                                        errorMessage = "Email atau password salah!"
+                                        Log.e("LoginScreen", "Error body is null")
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("LoginScreen", "Error parsing JSON: ${e.message}", e)
+                                    errorMessage = "Email atau password salah!"
+                                }
                             }
                         }
 
                         override fun onFailure(call: retrofit2.Call<LoginResponse>, t: Throwable) {
-                            errorMessage = "Error: ${t.message}"
-                            Log.e("LoginScreen", "Error: ${t.message}")
+                            isLoading = false
+                            errorMessage = "Gagal terhubung ke server. Silakan coba lagi."
+                            Log.e("LoginScreen", "Network Error: ${t.message}", t)
                         }
                     })
                 }
@@ -122,21 +141,17 @@ fun LoginScreen(
             navController.navigate(Screen.Register.route)
         },
         onGoogleClick = {
-//            try {
-//                viewModel.signInGoogle(context)
-//            } catch (e: Exception) {
-//                Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
-//            }
-        },
-//        errorMessage = errorMessage
+            // Google sign in implementation
+        }
     )
 }
-
 
 @Composable
 fun LoginContent(
     email: String,
     password: String,
+    errorMessage: String?,
+    isLoading: Boolean,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
@@ -145,9 +160,8 @@ fun LoginContent(
     onGoogleClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var passwordVisible by remember {
-        mutableStateOf(false)
-    }
+    var passwordVisible by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -158,6 +172,7 @@ fun LoginContent(
             contentScale = ContentScale.FillWidth,
             modifier = Modifier.fillMaxWidth()
         )
+
         Text(
             text = "Masuk",
             style = MaterialTheme.typography.titleMedium.copy(
@@ -167,9 +182,19 @@ fun LoginContent(
             ),
             modifier = Modifier
         )
+
+        errorMessage?.let { error ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = error,
+                color = Error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Kol Email
         MyTextField(
             value = email,
             onValueChange = onEmailChange,
@@ -183,7 +208,6 @@ fun LoginContent(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Kol PassWord
         MyTextField(
             value = password,
             onValueChange = onPasswordChange,
@@ -196,7 +220,7 @@ fun LoginContent(
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         imageVector = if (passwordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                        contentDescription = null
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
                     )
                 }
             },
@@ -205,6 +229,7 @@ fun LoginContent(
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = "Lupa Kata Sandi?",
             style = MaterialTheme.typography.bodySmall.copy(
@@ -214,21 +239,26 @@ fun LoginContent(
             modifier = Modifier
                 .align(Alignment.End)
                 .padding(horizontal = 24.dp)
-                .clickable(
-                    onClick = onForgotPasswordClick
-                )
+                .clickable(onClick = onForgotPasswordClick)
         )
         Spacer(modifier = Modifier.height(32.dp))
 
-        //TOMBOLLLLL BUATTTT MASUKKKKKKKKK
         MyPrimaryButton(
-            text = "Masuk",
+            text = if (isLoading) "Memproses..." else "Masuk",
             onClick = onLoginClick,
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
         )
+
+        if (isLoading) {
+            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator(color = Primary)
+        }
+
         Spacer(modifier = Modifier.height(48.dp))
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -246,7 +276,7 @@ fun LoginContent(
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
-        // Modified Google Sign-In Button
+
         Row(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
@@ -263,7 +293,7 @@ fun LoginContent(
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_google),
-                contentDescription = null,
+                contentDescription = "Google Sign In",
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -274,7 +304,9 @@ fun LoginContent(
                 )
             )
         }
+
         Spacer(modifier = Modifier.weight(1f))
+
         Row(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
@@ -292,9 +324,7 @@ fun LoginContent(
                     color = Primary,
                     fontWeight = FontWeight.Bold
                 ),
-                modifier = Modifier.clickable(
-                    onClick = onRegisterClick
-                )
+                modifier = Modifier.clickable(onClick = onRegisterClick)
             )
         }
     }
@@ -307,12 +337,14 @@ private fun LoginScreenPreview() {
         LoginContent(
             email = "",
             password = "",
+            errorMessage = null,
+            isLoading = false,
             onEmailChange = {},
             onPasswordChange = {},
-            onLoginClick = { /*TODO*/ },
-            onRegisterClick = { /*TODO*/ },
-            onForgotPasswordClick = { /*TODO*/ },
-            onGoogleClick = { /*TODO*/ }
+            onLoginClick = {},
+            onRegisterClick = {},
+            onForgotPasswordClick = {},
+            onGoogleClick = {}
         )
     }
 }

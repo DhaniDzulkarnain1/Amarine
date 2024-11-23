@@ -3,37 +3,19 @@ package com.app.amarine.ui.screen.register
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -47,6 +29,7 @@ import com.app.amarine.model.RegisterResponse
 import com.app.amarine.ui.components.MyPrimaryButton
 import com.app.amarine.ui.components.MyTextField
 import com.app.amarine.ui.theme.Primary
+import org.json.JSONObject
 
 @Composable
 fun RegisterScreen(navController: NavController) {
@@ -56,6 +39,7 @@ fun RegisterScreen(navController: NavController) {
     var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showSuccessDialog by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     // Dialog sukses
     if (showSuccessDialog) {
@@ -82,20 +66,19 @@ fun RegisterScreen(navController: NavController) {
     }
 
     val onRegisterClick: () -> Unit = {
-        // Reset error message
         errorMessage = null
+        isLoading = true
 
         when {
             name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
                 errorMessage = "Semua field harus diisi!"
-                Log.e("RegisterScreen", "Validasi gagal: Semua field harus diisi!")
+                isLoading = false
             }
             password != confirmPassword -> {
                 errorMessage = "Password dan Konfirmasi Password tidak cocok!"
-                Log.e("RegisterScreen", "Validasi gagal: Password tidak cocok!")
+                isLoading = false
             }
             else -> {
-                // Hanya kirim email, password, dan nama (tanpa role)
                 val registerRequest = RegisterRequest(
                     email = email,
                     password = password,
@@ -108,21 +91,27 @@ fun RegisterScreen(navController: NavController) {
                         call: retrofit2.Call<RegisterResponse>,
                         response: retrofit2.Response<RegisterResponse>
                     ) {
-                        Log.d("RegisterScreen", "Response Code: ${response.code()}")
-                        Log.d("RegisterScreen", "Error Body: ${response.errorBody()?.string()}")
-                        Log.d("RegisterScreen", "URL Called: ${call.request().url}")
+                        isLoading = false
 
                         if (response.isSuccessful) {
                             showSuccessDialog = true
                         } else {
-                            errorMessage = "Gagal mendaftar: ${response.message()}"
-                            Log.e("RegisterScreen", "Gagal mendaftar: ${response.message()}")
+                            try {
+                                // Parse error message from response body
+                                val errorBody = response.errorBody()?.string()
+                                val errorJson = JSONObject(errorBody ?: "")
+                                errorMessage = errorJson.getString("error")
+                            } catch (e: Exception) {
+                                errorMessage = "Terjadi kesalahan tidak diketahui"
+                                Log.e("RegisterScreen", "Error parsing error response: ${e.message}")
+                            }
                         }
                     }
 
                     override fun onFailure(call: retrofit2.Call<RegisterResponse>, t: Throwable) {
-                        errorMessage = "Error: ${t.message}"
-                        Log.e("RegisterScreen", "Error: ${t.message}")
+                        isLoading = false
+                        errorMessage = "Gagal terhubung ke server. Silakan coba lagi."
+                        Log.e("RegisterScreen", "Network error: ${t.message}")
                     }
                 })
             }
@@ -135,6 +124,7 @@ fun RegisterScreen(navController: NavController) {
         password = password,
         confirmPassword = confirmPassword,
         errorMessage = errorMessage,
+        isLoading = isLoading,
         onEmailChange = { email = it },
         onNameChange = { name = it },
         onPasswordChange = { password = it },
@@ -155,6 +145,7 @@ fun RegisterContent(
     password: String,
     confirmPassword: String,
     errorMessage: String?,
+    isLoading: Boolean,
     onEmailChange: (String) -> Unit,
     onNameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
@@ -187,7 +178,6 @@ fun RegisterContent(
             modifier = Modifier.padding(top = 16.dp)
         )
 
-        // Error message if any
         errorMessage?.let { error ->
             Text(
                 text = error,
@@ -199,36 +189,30 @@ fun RegisterContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Email field
         MyTextField(
             value = email,
             onValueChange = onEmailChange,
             placeholder = { Text(text = "Email") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Name field
         MyTextField(
             value = name,
             onValueChange = onNameChange,
             placeholder = { Text(text = "Nama Lengkap") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Password field
         MyTextField(
             value = password,
             onValueChange = onPasswordChange,
             placeholder = { Text(text = "Kata Sandi") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = if (!passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             trailingIcon = {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -244,12 +228,10 @@ fun RegisterContent(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Confirm Password field
         MyTextField(
             value = confirmPassword,
             onValueChange = onConfirmPasswordChange,
             placeholder = { Text(text = "Konfirmasi Kata Sandi") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = if (!confirmPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             trailingIcon = {
                 IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
@@ -265,18 +247,24 @@ fun RegisterContent(
         )
         Spacer(modifier = Modifier.height(48.dp))
 
-        // Register Button
         MyPrimaryButton(
-            text = "Daftar",
+            text = if (isLoading) "Memproses..." else "Daftar",
             onClick = onRegisterClick,
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
         )
 
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.padding(top = 16.dp),
+                color = Primary
+            )
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
-        // Login Link
         Row(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)

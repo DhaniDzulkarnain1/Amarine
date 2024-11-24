@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.app.amarine.R
+import com.app.amarine.UserPreferences
 import com.app.amarine.model.Article
 import com.app.amarine.model.articles
 import com.app.amarine.ui.components.ItemCardArticle
@@ -46,8 +48,13 @@ fun HomeScreen(navController: NavController) {
         R.drawable.ic_image_carousel_3,
     )
 
+    // Get UserPreferences instance
+    val context = LocalContext.current
+    val userPreferences = remember { UserPreferences(context) }
+    val userName = remember { userPreferences.getUserNama() }
+
     HomeContent(
-        name = null,
+        name = userName,  // Menggunakan nama dari UserPreferences
         userImageUrl = null,
         searchQuery = query,
         itemsPictureRes = itemsPictureRes,
@@ -98,7 +105,7 @@ fun HomeContent(
         LazyColumn(
             modifier = Modifier
                 .padding(contentPadding)
-                .padding(top = 16.dp), // Menambahkan padding atas
+                .padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {

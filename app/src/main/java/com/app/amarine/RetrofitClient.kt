@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    private const val BASE_URL = "http:192.168.56.51:3000" // sesuaikan dengan URL dan port Anda
+    private const val BASE_URL = "http:10.170.18.182:3000" // sesuaikan dengan URL dan port Anda
 
     val instance: ApiService by lazy {
         val loggingInterceptor = HttpLoggingInterceptor().apply {

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.app.amarine.UserPreferences
 import com.app.amarine.ui.components.ContainerBox
 import com.app.amarine.ui.components.ItemProfileUser
 import com.app.amarine.ui.components.MyPrimaryButton
@@ -47,7 +48,7 @@ fun EditProfileScreen(navController: NavController) {
         fullName = fullName,
         email = email,
         phoneNumber = phoneNumber,
-        gender = gender,
+        alamat = gender,
         placeDateOfBirth = placeDateOfBirth,
         onFullNameChange = { fullName = it },
         onEmailChange = { email = it },
@@ -66,7 +67,7 @@ fun EditProfileContent(
     fullName: String,
     email: String,
     phoneNumber: String,
-    gender: String,
+    alamat: String,
     placeDateOfBirth: String,
     onFullNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
@@ -98,10 +99,13 @@ fun EditProfileContent(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
+            val userPreferences = UserPreferences.current()
+            val userName = userPreferences.getUserNama()
+
             Spacer(modifier = Modifier.height(16.dp))
             ContainerBox(modifier = Modifier.padding(horizontal = 16.dp)) {
                 ItemProfileUser(
-                    name = name,
+                    name = userName,
                     imageUrl = imageUrl,
                     modifier = Modifier
                         .padding(vertical = 16.dp, horizontal = 16.dp)
@@ -112,7 +116,7 @@ fun EditProfileContent(
             MyTextField(
                 value = fullName,
                 onValueChange = onFullNameChange,
-                placeholder = { Text(text = "Nama Lengkap") },
+                placeholder = { Text(text = userName) },
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .fillMaxWidth()
@@ -130,22 +134,21 @@ fun EditProfileContent(
                     .fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
+            val userEmail = userPreferences.getUserEmail()
+
             MyTextField(
                 value = email,
                 onValueChange = onEmailChange,
-                placeholder = { Text(text = "Email") },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email
-                ),
+                placeholder = { Text(text = userEmail) },
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
             MyTextField(
-                value = gender,
+                value = alamat,
                 onValueChange = onGenderChange,
-                placeholder = { Text(text = "Gender") },
+                placeholder = { Text(text = "Alamat") },
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .fillMaxWidth()

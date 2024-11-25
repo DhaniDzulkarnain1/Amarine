@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.app.amarine.UserPreferences
 import com.app.amarine.ui.components.ContainerBox
 import com.app.amarine.ui.components.ItemProfileMenu
 import com.app.amarine.ui.components.ItemProfileUser
@@ -40,14 +41,21 @@ import com.app.amarine.ui.theme.Background
 
 @Composable
 fun ProfileScreen(navController: NavController) {
+    // Tambahkan ini untuk mengambil nama user
+    val userPreferences = UserPreferences.current()
+    val userName = userPreferences.getUserNama()
+
     ProfileContent(
         imageUrl = null,
-        name = null,
+        name = userName,  // Gunakan userName di sini
         onEditProfileClick = { navController.navigate(Screen.EditProfile.route) },
         onChangePasswordClick = { navController.navigate(Screen.ChangePassword.route) },
         onFavoriteArticles = { navController.navigate(Screen.FavoriteArticles.route) },
         onSettingClick = { navController.navigate(Screen.SettingProfile.route) },
-        onLogoutClick = { navController.navigate(Screen.Login.route) },
+        onLogoutClick = {
+            userPreferences.clearUser() // Tambahkan ini untuk clear data saat logout
+            navController.navigate(Screen.Login.route)
+        },
         onNavigateUp = { navController.navigateUp() }
     )
 }

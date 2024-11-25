@@ -145,7 +145,7 @@ fun DetailMemberContent(
                         )
 
                         Text(
-                            text = "Status",
+                            text = "Role",
                             fontWeight = FontWeight.Bold
                         )
 

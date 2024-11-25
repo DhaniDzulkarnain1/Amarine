@@ -21,6 +21,10 @@ class UserPreferences(context: Context) {
         return prefs.getString("USER_NAMA", "Guest") ?: "Guest"
     }
 
+    fun getUserEmail(): String {
+        return prefs.getString("USER_EMAIL", "") ?: ""
+    }
+
     fun clearUser() {
         prefs.edit().clear().apply()
     }

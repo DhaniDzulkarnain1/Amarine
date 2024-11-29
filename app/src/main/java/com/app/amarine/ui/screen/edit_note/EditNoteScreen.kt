@@ -12,17 +12,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
-import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -38,22 +37,21 @@ import coil.compose.AsyncImage
 import com.app.amarine.model.Note
 import com.app.amarine.ui.components.MyTopAppBar
 import com.app.amarine.ui.navigation.Screen
-import com.app.amarine.ui.screen.detail_note.DeleteItemDialog
 import com.app.amarine.ui.theme.Primary200
 
-@Composable
-fun EditNoteScreen(
-    note: Note?,
-    navController: NavController
-) {
+private val CardBackground = Color(0xFFFFF3E0)
+private val TextFieldBorder = Color(0xFF424242)
+private val ErrorRed = Color(0xFFD32F2F)
+private val BrandOrange = Color(0xFFFF5722)
 
+@Composable
+fun EditNoteScreen(note: Note?, navController: NavController) {
     EditNoteContent(
         note = note,
         onNavigateUp = { navController.navigateUp() },
         onSave = { navController.navigate(Screen.Catatan.route)},
         onCancel = { navController.navigateUp() }
     )
-
 }
 
 @Composable
@@ -80,7 +78,6 @@ fun EditNoteContent(
             )
         }
     ) { contentPadding ->
-
         val name = remember { mutableStateOf("") }
         val type = remember { mutableStateOf("") }
         val weight = remember { mutableStateOf("") }
@@ -88,14 +85,13 @@ fun EditNoteContent(
         val storageLocation = remember { mutableStateOf("") }
         val noteType = remember { mutableStateOf("") }
 
-        LazyColumn (
+        LazyColumn(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .padding(contentPadding)
                 .padding(16.dp)
         ) {
-
             item {
                 AsyncImage(
                     model = note?.imageResourceId,
@@ -110,95 +106,118 @@ fun EditNoteContent(
             item {
                 Box(
                     modifier = Modifier
-                        .background(Primary200, MaterialTheme.shapes.large)
+                        .background(CardBackground, MaterialTheme.shapes.large)
                         .fillMaxWidth()
                 ) {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .padding(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(20.dp)
                     ) {
-                        OutlinedTextField(
+                        EditFieldItem(
                             value = name.value,
                             onValueChange = { name.value = it },
-                            placeholder = { Text("Nama : ${note?.name}") },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Text
-                            ),
-                            modifier = Modifier
-                                .background(Color.White, MaterialTheme.shapes.medium)
-                                .padding(8.dp)
-                                .fillMaxWidth()
+                            label = "Nama",
+                            placeholder = note?.name ?: "",
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                         )
 
-                        OutlinedTextField(
+                        EditFieldItem(
                             value = type.value,
-                            onValueChange = { type.value = it},
-                            placeholder = { Text("Jenis : ${note?.type}") },
-                            modifier = Modifier
-                                .background(Color.White, MaterialTheme.shapes.medium)
-                                .padding(8.dp)
-                                .fillMaxWidth()
+                            onValueChange = { type.value = it },
+                            label = "Jenis",
+                            placeholder = note?.type ?: ""
                         )
 
-                        OutlinedTextField(
+                        EditFieldItem(
                             value = weight.value,
-                            onValueChange = { weight.value = it},
-                            placeholder = { Text("Berat : ${note?.weight}") },
-                            modifier = Modifier
-                                .background(Color.White, MaterialTheme.shapes.medium)
-                                .padding(8.dp)
-                                .fillMaxWidth()
+                            onValueChange = { weight.value = it },
+                            label = "Berat",
+                            placeholder = "${note?.weight} Kg"
                         )
 
-                        OutlinedTextField(
+                        EditFieldItem(
                             value = date.value,
-                            onValueChange = { date.value = it},
-                            placeholder = { Text("Tanggal : ${note?.date}") },
-                            modifier = Modifier
-                                .background(Color.White, MaterialTheme.shapes.medium)
-                                .padding(8.dp)
-                                .fillMaxWidth()
+                            onValueChange = { date.value = it },
+                            label = "Tanggal",
+                            placeholder = note?.date ?: ""
                         )
 
-                        OutlinedTextField(
+                        EditFieldItem(
                             value = storageLocation.value,
-                            onValueChange = { storageLocation.value = it},
-                            placeholder = { Text("Lokasi Penyimpanan : ${note?.storageLocation}") },
-                            modifier = Modifier
-                                .background(Color.White, MaterialTheme.shapes.medium)
-                                .padding(8.dp)
-                                .fillMaxWidth()
+                            onValueChange = { storageLocation.value = it },
+                            label = "Lokasi Penyimpanan",
+                            placeholder = note?.storageLocation ?: ""
                         )
 
-                        OutlinedTextField(
+                        EditFieldItem(
                             value = noteType.value,
-                            onValueChange = { noteType.value = it},
-                            placeholder = { Text("Catatan : ${note?.note}") },
-                            modifier = Modifier
-                                .background(Color.White, MaterialTheme.shapes.medium)
-                                .padding(8.dp)
-                                .fillMaxWidth()
+                            onValueChange = { noteType.value = it },
+                            label = "Catatan",
+                            placeholder = note?.note ?: ""
                         )
+
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier
-                                .align(Alignment.End)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.align(Alignment.End)
                         ) {
                             Button(
-                                onClick = onCancel
+                                onClick = onCancel,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = ErrorRed,
+                                    contentColor = Color.White
+                                )
                             ) {
-                                Text(text = "Batal")
+                                Text("Batal")
                             }
                             Button(
-                                onClick = onSave
+                                onClick = onSave,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = BrandOrange
+                                )
                             ) {
-                                Text(text = "Simpan")
+                                Text("Simpan")
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EditFieldItem(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.Gray
+            )
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                placeholder = { Text(placeholder) },
+                keyboardOptions = keyboardOptions,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TextFieldBorder,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                )
+            )
         }
     }
 }

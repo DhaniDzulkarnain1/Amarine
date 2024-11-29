@@ -60,12 +60,13 @@ import com.app.amarine.ui.theme.Primary200
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
+private val CardBackground = Color(0xFFFFF3E0)
+
 @Composable
 fun DetailNoteScreen(
     note: Note?,
     navController: NavController
 ) {
-
     var isShowDialog by remember {
         mutableStateOf(false)
     }
@@ -92,7 +93,6 @@ fun DetailNoteScreen(
             }
         )
     }
-
 }
 
 @Composable
@@ -103,7 +103,6 @@ fun DetailNoteContent(
     onEdit: (Note?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     val showMenu = remember { mutableStateOf(false) }
 
     Scaffold(
@@ -133,7 +132,6 @@ fun DetailNoteContent(
             )
         }
     ) { contentPadding ->
-
         val showDeleteDialog = remember { mutableStateOf(false) }
 
         Column(
@@ -143,21 +141,17 @@ fun DetailNoteContent(
                 .padding(contentPadding)
                 .padding(horizontal = 16.dp)
         ) {
-
             Box(
-                modifier = Modifier
-                    .align(Alignment.End)
-
+                modifier = Modifier.align(Alignment.End)
             ) {
                 DropdownMenu(
                     expanded = showMenu.value,
                     onDismissRequest = { showMenu.value = false },
-                    modifier = Modifier
-                        .background(Primary200)
+                    modifier = Modifier.background(Primary200)
                 ) {
                     DropdownMenuItem(
                         text = { Text("Edit") },
-                        onClick = {onEdit(note)}
+                        onClick = { onEdit(note) }
                     )
 
                     DropdownMenuItem(
@@ -190,54 +184,57 @@ fun DetailNoteContent(
 
             Box(
                 modifier = Modifier
-                    .background(Primary200, MaterialTheme.shapes.large)
+                    .background(CardBackground, MaterialTheme.shapes.large)
                     .fillMaxWidth()
             ) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .padding(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(20.dp)
                 ) {
-                    Text(
-                        text = "Jenis : ${note?.type}",
-                        modifier = Modifier
-                            .background(Color.White, MaterialTheme.shapes.medium)
-                            .padding(8.dp)
-                            .fillMaxWidth()
-                    )
-
-                    Text(
-                        text = "Berat : ${note?.weight}",
-                        modifier = Modifier
-                            .background(Color.White, MaterialTheme.shapes.medium)
-                            .padding(8.dp)
-                            .fillMaxWidth()
-                    )
-
-                    Text(
-                        text = "Tanggal : ${note?.date}",
-                        modifier = Modifier
-                            .background(Color.White, MaterialTheme.shapes.medium)
-                            .padding(8.dp)
-                            .fillMaxWidth()
-                    )
-
-                    Text(
-                        text = "Lokasi Penyimpanan : ${note?.storageLocation}",
-                        modifier = Modifier
-                            .background(Color.White, MaterialTheme.shapes.medium)
-                            .padding(8.dp)
-                            .fillMaxWidth()
-                    )
-
-                    Text(
-                        text = "Catatan :\n" + "${note?.note}",
-                        modifier = Modifier
-                            .background(Color.White, MaterialTheme.shapes.medium)
-                            .padding(8.dp)
-                            .fillMaxWidth()
-                    )
+                    DetailItem(label = "Jenis", value = note?.type ?: "-")
+                    DetailItem(label = "Berat", value = "${note?.weight} Kg")
+                    DetailItem(label = "Tanggal", value = note?.date ?: "-")
+                    DetailItem(label = "Lokasi Penyimpanan", value = note?.storageLocation ?: "-")
+                    DetailItem(label = "Catatan", value = note?.note ?: "-", isMultiLine = true)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailItem(
+    label: String,
+    value: String,
+    isMultiLine: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.Gray
+            )
+            if (isMultiLine) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            } else {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    )
+                )
             }
         }
     }
@@ -251,7 +248,7 @@ fun DeleteItemDialog(
 ) {
     if (showDialog.value) {
         AlertDialog(
-            onDismissRequest = { showDialog.value = false }, // Menutup dialog ketika di luar dialog di klik
+            onDismissRequest = { showDialog.value = false },
             title = {
                 Text(text = "Konfirmasi Hapus Catatan")
             },

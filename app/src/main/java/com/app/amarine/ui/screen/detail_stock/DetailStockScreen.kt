@@ -30,7 +30,8 @@ import androidx.navigation.NavController
 import com.app.amarine.model.DetailStock
 import com.app.amarine.model.Stock
 import com.app.amarine.ui.components.MyTopAppBar
-import com.app.amarine.ui.theme.Primary200
+
+private val CardBackground = Color(0xFFFFF3E0) // Very soft orange background
 
 @Composable
 fun DetailStockScreen(
@@ -38,9 +39,7 @@ fun DetailStockScreen(
     navController: NavController
 ) {
     if (stock == null) {
-        // Log jika stok tidak ditemukan
         Log.d("DetailStockScreen", "Stock is null. Data not found!")
-        // Tampilkan pesan error jika stok tidak ditemukan
         Text(
             text = "Data stok tidak ditemukan",
             style = MaterialTheme.typography.titleLarge,
@@ -49,7 +48,6 @@ fun DetailStockScreen(
         return
     }
 
-    // Log jika stok ditemukan
     Log.d("DetailStockScreen", "Displaying stock: $stock")
 
     DetailStockContent(
@@ -90,7 +88,6 @@ fun DetailStockContent(
                 .padding(16.dp)
                 .verticalScroll(scrollState)
         ) {
-            // Menampilkan jenis stok
             Text(
                 text = stock.type,
                 style = MaterialTheme.typography.titleLarge.copy(
@@ -108,13 +105,12 @@ fun DetailStockContent(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Header tabel
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Primary200)
+                            .background(CardBackground)
                             .padding(vertical = 12.dp, horizontal = 16.dp)
                     ) {
                         Text(
@@ -147,7 +143,6 @@ fun DetailStockContent(
                         )
                     }
 
-                    // Konten tabel
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {

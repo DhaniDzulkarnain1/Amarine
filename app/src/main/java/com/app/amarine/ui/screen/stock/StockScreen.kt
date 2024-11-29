@@ -30,17 +30,15 @@ import com.app.amarine.model.stocks
 import com.app.amarine.ui.components.MyTopAppBar
 import com.app.amarine.ui.navigation.Screen
 import com.app.amarine.ui.theme.Primary
-import com.app.amarine.ui.theme.Primary200
+
+private val CardBackground = Color(0xFFFFF3E0) // Very soft orange background
 
 @Composable
 fun StockScreen(navController: NavController) {
     StockContent(
         stock = stocks,
         onDetailClick = { stock ->
-            // Log untuk memastikan data yang dikirim
             Log.d("StockScreen", "Navigating to DetailStockScreen with stock ID: ${stock.id}")
-
-            // Navigasi ke DetailStockScreen dengan ID stok
             navController.navigate(Screen.DetailStock.createRoute(stock.id))
         }
     )
@@ -71,7 +69,7 @@ fun StockContent(
                 .verticalScroll(scrollState)
         ) {
             Text(
-                text = "Kelola Stok",
+                text = "Stok",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold
                 )
@@ -87,12 +85,11 @@ fun StockContent(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Header Tabel
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Primary200)
+                            .background(CardBackground)
                             .padding(vertical = 12.dp, horizontal = 16.dp)
                     ) {
                         Text(
@@ -125,7 +122,6 @@ fun StockContent(
                         )
                     }
 
-                    // Konten Tabel
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {

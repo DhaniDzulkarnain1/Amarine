@@ -48,13 +48,12 @@ fun HomeScreen(navController: NavController) {
         R.drawable.ic_image_carousel_3,
     )
 
-    // Get UserPreferences instance
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
     val userName = remember { userPreferences.getUserNama() }
 
     HomeContent(
-        name = userName,  // Menggunakan nama dari UserPreferences
+        name = userName,
         userImageUrl = null,
         searchQuery = query,
         itemsPictureRes = itemsPictureRes,
@@ -85,10 +84,9 @@ fun HomeContent(
 ) {
     val pagerState = rememberPagerState()
 
-    // Automatic scrolling
     LaunchedEffect(pagerState) {
         while (true) {
-            delay(25000L) // 25 detik
+            delay(25000L)
             val nextPage = (pagerState.currentPage + 1) % itemsPictureRes.size
             pagerState.animateScrollToPage(nextPage)
         }
@@ -109,7 +107,6 @@ fun HomeContent(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                // Bagian profil
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -187,6 +184,9 @@ fun HomeContent(
                     onSeeMoreClick = { onSeeMoreArticleClick(it) },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
+            }
+            item {
+                Spacer(modifier = Modifier.height(3.dp))
             }
         }
     }

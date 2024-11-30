@@ -3,38 +3,12 @@ package com.app.amarine.ui.screen.detail_note
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,7 +17,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -54,8 +27,6 @@ import com.app.amarine.R
 import com.app.amarine.model.Note
 import com.app.amarine.ui.components.MyTopAppBar
 import com.app.amarine.ui.navigation.Screen
-import com.app.amarine.ui.screen.detail_member.DetailMemberContent
-import com.app.amarine.ui.theme.AmarineTheme
 import com.app.amarine.ui.theme.Primary200
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
@@ -67,9 +38,7 @@ fun DetailNoteScreen(
     note: Note?,
     navController: NavController
 ) {
-    var isShowDialog by remember {
-        mutableStateOf(false)
-    }
+    var isShowDialog by remember { mutableStateOf(false) }
 
     DetailNoteContent(
         note = note,
@@ -104,6 +73,7 @@ fun DetailNoteContent(
     modifier: Modifier = Modifier
 ) {
     val showMenu = remember { mutableStateOf(false) }
+    val showDeleteDialog = remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
@@ -119,9 +89,7 @@ fun DetailNoteContent(
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = { showMenu.value = true }
-                    ) {
+                    IconButton(onClick = { showMenu.value = true }) {
                         Icon(
                             imageVector = Icons.Rounded.MoreVert,
                             tint = Color.White,
@@ -132,8 +100,6 @@ fun DetailNoteContent(
             )
         }
     ) { contentPadding ->
-        val showDeleteDialog = remember { mutableStateOf(false) }
-
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -141,22 +107,65 @@ fun DetailNoteContent(
                 .padding(contentPadding)
                 .padding(horizontal = 16.dp)
         ) {
-            Box(
-                modifier = Modifier.align(Alignment.End)
-            ) {
+            Box(modifier = Modifier.align(Alignment.End)) {
                 DropdownMenu(
                     expanded = showMenu.value,
                     onDismissRequest = { showMenu.value = false },
-                    modifier = Modifier.background(Primary200)
+                    modifier = Modifier
+                        .background(Primary200)
+                        .padding(vertical = 8.dp)
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Edit") },
-                        onClick = { onEdit(note) }
+                        text = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Edit,
+                                    contentDescription = null,
+                                    tint = Color.Black
+                                )
+                                Text(
+                                    "Edit",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                )
+                            }
+                        },
+                        onClick = {
+                            showMenu.value = false
+                            onEdit(note)
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
                     )
 
                     DropdownMenuItem(
-                        text = { Text("Hapus") },
-                        onClick = { showDeleteDialog.value = true }
+                        text = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Delete,
+                                    contentDescription = null,
+                                    tint = Color.Red
+                                )
+                                Text(
+                                    "Hapus",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.Red
+                                    )
+                                )
+                            }
+                        },
+                        onClick = {
+                            showMenu.value = false
+                            showDeleteDialog.value = true
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
                     )
                 }
             }
@@ -164,7 +173,8 @@ fun DetailNoteContent(
             DeleteItemDialog(
                 showDialog = showDeleteDialog,
                 onDeleteConfirmed = onDelete,
-            ) { }
+                onDismiss = { showMenu.value = false }
+            )
 
             AsyncImage(
                 model = note?.imageResourceId,
@@ -214,9 +224,7 @@ private fun DetailItem(
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
@@ -249,32 +257,89 @@ fun DeleteItemDialog(
     if (showDialog.value) {
         AlertDialog(
             onDismissRequest = { showDialog.value = false },
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White),
+            containerColor = Color.White,
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.Warning,
+                    contentDescription = null,
+                    tint = Color.Red,
+                    modifier = Modifier.size(48.dp)
+                )
+            },
             title = {
-                Text(text = "Konfirmasi Hapus Catatan")
+                Text(
+                    text = "Konfirmasi Hapus Catatan",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
             },
             text = {
-                Text(text = "Apakah Anda Yakin Ingin Menghapus Catatan Penjualan?")
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onDeleteConfirmed()
-                        showDialog.value = false
-                    },
-                    colors = ButtonDefaults.buttonColors(Primary200)
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Hapus Catatan")
+                    Text(
+                        text = "Apakah Anda yakin?",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                    Text(
+                        text = "Catatan yang dihapus tidak dapat dikembalikan",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray
+                        )
+                    )
                 }
             },
-            dismissButton = {
-                Button(
-                    onClick = {
-                        onDismiss()
-                        showDialog.value = false
-                    },
-                    colors = ButtonDefaults.buttonColors(Primary200)
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
                 ) {
-                    Text("Batal")
+                    OutlinedButton(
+                        onClick = {
+                            onDismiss()
+                            showDialog.value = false
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color.Gray
+                        )
+                    ) {
+                        Text(
+                            "Batal",
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            onDeleteConfirmed()
+                            showDialog.value = false
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Red
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            "Hapus",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         )
@@ -298,9 +363,7 @@ fun ResetSuccessDialog(
     ) {
         Card(
             modifier = modifier,
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White,
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
                 modifier = Modifier
@@ -335,13 +398,5 @@ fun ResetSuccessDialog(
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun DetailMemberContentPreview() {
-    AmarineTheme {
-        DetailMemberContent(member = null, onNavigateUp = { /*TODO*/ })
     }
 }

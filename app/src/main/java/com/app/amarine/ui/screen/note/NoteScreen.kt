@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,9 +40,8 @@ fun NoteScreen(navController: NavController) {
         searchQuery = query,
         onQueryChange = { query = it },
         onAddNote = { navController.navigate(Screen.AddNote.route) },
-        onDetailClick = {
-            navController.currentBackStackEntry?.savedStateHandle?.set("note", it)
-            navController.navigate(Screen.DetailNote.route)
+        onDetailClick = { note ->
+            navController.navigate(Screen.DetailNote.createRoute(note.id))
         }
     )
 }
@@ -63,9 +61,7 @@ fun NoteContent(
             MyTopAppBar(
                 title = "Amarine",
                 actions = {
-                    IconButton(
-                        onClick = onAddNote
-                    ) {
+                    IconButton(onClick = onAddNote) {
                         Icon(
                             imageVector = Icons.Rounded.Add,
                             contentDescription = null,
@@ -79,7 +75,7 @@ fun NoteContent(
         LazyColumn(
             modifier = Modifier
                 .padding(contentPadding)
-                .padding(top = 16.dp),  // Tambahkan padding top untuk seluruh konten
+                .padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -90,7 +86,7 @@ fun NoteContent(
                     ),
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .padding(top = 8.dp)  // Tambahkan padding top untuk judul
+                        .padding(top = 8.dp)
                 )
             }
 

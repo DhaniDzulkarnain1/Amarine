@@ -1,7 +1,6 @@
 package com.app.amarine.ui.navigation
 
 sealed class Screen(val route: String) {
-
     data object Splash : Screen("splash")
     data object OnBoarding : Screen("onboarding")
     data object Login : Screen("login")
@@ -24,10 +23,11 @@ sealed class Screen(val route: String) {
     data object SettingReportProblem : Screen("setting_report_problem")
     data object SettingAboutApp : Screen("setting_about_app")
     data object AddNote : Screen("add_note")
-    data object DetailNote : Screen("detail_note")
+    data object DetailNote : Screen("detail_note/{noteId}") {
+        fun createRoute(noteId: Int) = "detail_note/$noteId"
+    }
     data object EditNote : Screen("edit_note")
 
-    // Rute dengan Parameter
     data object DetailStock : Screen("detail_stock/{stockId}") {
         fun createRoute(stockId: Int) = "detail_stock/$stockId"
     }

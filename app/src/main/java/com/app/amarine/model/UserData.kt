@@ -7,5 +7,5 @@ data class UserData(
     val email: String,
     val nama: String,
     val role: String,
-    @SerializedName("nelayan_id") val nelayanId: Int?
+    @SerializedName("nelayan_id") val nelayanId: Int
 )

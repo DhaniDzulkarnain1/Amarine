@@ -1,42 +1,38 @@
 package com.app.amarine.ui.screen.edit_note
 
+import android.net.Uri
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.app.amarine.R
+import com.app.amarine.edit_note.EditNoteViewModel
 import com.app.amarine.model.Note
+import com.app.amarine.model.Result
 import com.app.amarine.ui.components.MyTopAppBar
-import com.app.amarine.ui.navigation.Screen
 import com.app.amarine.ui.theme.Primary200
 
 private val CardBackground = Color(0xFFFFF3E0)
@@ -45,141 +41,213 @@ private val ErrorRed = Color(0xFFD32F2F)
 private val BrandOrange = Color(0xFFFF5722)
 
 @Composable
-fun EditNoteScreen(note: Note?, navController: NavController) {
-    EditNoteContent(
-        note = note,
-        onNavigateUp = { navController.navigateUp() },
-        onSave = { navController.navigate(Screen.Catatan.route)},
-        onCancel = { navController.navigateUp() }
-    )
-}
-
-@Composable
-fun EditNoteContent(
+fun EditNoteScreen(
     note: Note?,
-    onNavigateUp : () -> Unit,
-    onSave : () -> Unit,
-    onCancel : () -> Unit,
-    modifier: Modifier = Modifier
+    navController: NavController,
+    viewModel: EditNoteViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val editNoteState by viewModel.editNoteState.collectAsState()
+    val imageUri by viewModel.imageUri.collectAsState()
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            Log.d("EditNote", "Selected image URI: $it")
+            viewModel.updateImage(it)
+        }
+    }
+
+    var nama by remember { mutableStateOf(note?.nama ?: "") }
+    var jenis by remember { mutableStateOf(note?.jenis ?: "") }
+    var berat by remember { mutableStateOf(note?.berat?.toString() ?: "") }
+    var tanggal by remember { mutableStateOf(note?.tanggal ?: "") }
+    var waktu by remember { mutableStateOf(note?.waktu ?: "") }
+    var lokasiPenyimpanan by remember { mutableStateOf(note?.lokasi_penyimpanan ?: "") }
+    var catatan by remember { mutableStateOf(note?.catatan ?: "") }
+
+    LaunchedEffect(editNoteState) {
+        when (editNoteState) {
+            is Result.Success -> {
+                Toast.makeText(context, "Berhasil mengupdate catatan", Toast.LENGTH_SHORT).show()
+                navController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                navController.popBackStack()
+            }
+            is Result.Error -> {
+                Toast.makeText(context, (editNoteState as Result.Error).message, Toast.LENGTH_SHORT).show()
+            }
+            else -> {}
+        }
+    }
+
     Scaffold(
-        modifier = modifier,
         topBar = {
             MyTopAppBar(
                 title = "Edit Catatan",
                 navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
+                    IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = null,
+                            contentDescription = "Kembali",
+                            tint = Color.White
                         )
                     }
                 }
             )
         }
     ) { contentPadding ->
-        val name = remember { mutableStateOf("") }
-        val type = remember { mutableStateOf("") }
-        val weight = remember { mutableStateOf("") }
-        val date = remember { mutableStateOf("") }
-        val storageLocation = remember { mutableStateOf("") }
-        val noteType = remember { mutableStateOf("") }
-
-        LazyColumn(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier
-                .padding(contentPadding)
-                .padding(16.dp)
-        ) {
-            item {
-                AsyncImage(
-                    model = note?.imageResourceId,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(top = 16.dp)
-                        .clip(MaterialTheme.shapes.large)
-                        .border(2.dp, Primary200, MaterialTheme.shapes.large)
-                )
-            }
-
-            item {
-                Box(
-                    modifier = Modifier
-                        .background(CardBackground, MaterialTheme.shapes.large)
-                        .fillMaxWidth()
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.padding(20.dp)
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .padding(contentPadding)
+                    .padding(16.dp)
+            ) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        EditFieldItem(
-                            value = name.value,
-                            onValueChange = { name.value = it },
-                            label = "Nama",
-                            placeholder = note?.name ?: "",
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                        AsyncImage(
+                            model = when {
+                                imageUri != null -> imageUri
+                                !note?.gambar.isNullOrEmpty() -> "http://10.0.2.2:3000${note?.gambar}"
+                                else -> R.drawable.ic_note_default
+                            },
+                            contentDescription = "Gambar ${note?.nama}",
+                            error = painterResource(id = R.drawable.ic_note_default),
+                            placeholder = painterResource(id = R.drawable.ic_note_default),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(MaterialTheme.shapes.large)
+                                .border(2.dp, Primary200, MaterialTheme.shapes.large)
                         )
 
-                        EditFieldItem(
-                            value = type.value,
-                            onValueChange = { type.value = it },
-                            label = "Jenis",
-                            placeholder = note?.type ?: ""
-                        )
-
-                        EditFieldItem(
-                            value = weight.value,
-                            onValueChange = { weight.value = it },
-                            label = "Berat",
-                            placeholder = "${note?.weight} Kg"
-                        )
-
-                        EditFieldItem(
-                            value = date.value,
-                            onValueChange = { date.value = it },
-                            label = "Tanggal",
-                            placeholder = note?.date ?: ""
-                        )
-
-                        EditFieldItem(
-                            value = storageLocation.value,
-                            onValueChange = { storageLocation.value = it },
-                            label = "Lokasi Penyimpanan",
-                            placeholder = note?.storageLocation ?: ""
-                        )
-
-                        EditFieldItem(
-                            value = noteType.value,
-                            onValueChange = { noteType.value = it },
-                            label = "Catatan",
-                            placeholder = note?.note ?: ""
-                        )
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.align(Alignment.End)
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Color.Black.copy(alpha = 0.2f))
+                                .clickable { imagePickerLauncher.launch("image/*") },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Button(
-                                onClick = onCancel,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = ErrorRed,
-                                    contentColor = Color.White
-                                )
+                            Text(
+                                text = "Ketuk untuk mengganti gambar",
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier
+                                    .background(
+                                        Color.Black.copy(alpha = 0.5f),
+                                        MaterialTheme.shapes.small
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    Box(
+                        modifier = Modifier
+                            .background(CardBackground, MaterialTheme.shapes.large)
+                            .fillMaxWidth()
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            EditFieldItem(
+                                value = nama,
+                                onValueChange = { nama = it },
+                                label = "Nama",
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                            )
+
+                            EditFieldItem(
+                                value = jenis,
+                                onValueChange = { jenis = it },
+                                label = "Jenis"
+                            )
+
+                            EditFieldItem(
+                                value = berat,
+                                onValueChange = { berat = it },
+                                label = "Berat (Kg)",
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                            )
+
+                            EditFieldItem(
+                                value = tanggal,
+                                onValueChange = { tanggal = it },
+                                label = "Tanggal"
+                            )
+
+                            EditFieldItem(
+                                value = waktu,
+                                onValueChange = { waktu = it },
+                                label = "Waktu"
+                            )
+
+                            EditFieldItem(
+                                value = lokasiPenyimpanan,
+                                onValueChange = { lokasiPenyimpanan = it },
+                                label = "Lokasi Penyimpanan"
+                            )
+
+                            EditFieldItem(
+                                value = catatan,
+                                onValueChange = { catatan = it },
+                                label = "Catatan"
+                            )
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.align(Alignment.End)
                             ) {
-                                Text("Batal")
-                            }
-                            Button(
-                                onClick = onSave,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = BrandOrange
-                                )
-                            ) {
-                                Text("Simpan")
+                                Button(
+                                    onClick = { navController.navigateUp() },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = ErrorRed,
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text("Batal")
+                                }
+                                Button(
+                                    onClick = {
+                                        note?.id?.let { id ->
+                                            viewModel.updateNote(
+                                                id = id,
+                                                nama = nama,
+                                                jenis = jenis,
+                                                berat = berat,
+                                                tanggal = tanggal,
+                                                waktu = waktu,
+                                                lokasiPenyimpanan = lokasiPenyimpanan,
+                                                catatan = catatan,
+                                                imageUri = imageUri
+                                            )
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = BrandOrange
+                                    ),
+                                    enabled = editNoteState !is Result.Loading
+                                ) {
+                                    Text("Simpan")
+                                }
                             }
                         }
                     }
                 }
+            }
+
+            if (editNoteState is Result.Loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
     }
@@ -190,7 +258,6 @@ private fun EditFieldItem(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    placeholder: String,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     modifier: Modifier = Modifier
 ) {
@@ -208,14 +275,15 @@ private fun EditFieldItem(
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
-                placeholder = { Text(placeholder) },
                 keyboardOptions = keyboardOptions,
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = TextFieldBorder,
                     unfocusedBorderColor = Color.Transparent,
                     focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
+                    unfocusedContainerColor = Color.White,
+                    focusedLabelColor = TextFieldBorder,
+                    unfocusedLabelColor = TextFieldBorder.copy(alpha = 0.7f)
                 )
             )
         }

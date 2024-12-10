@@ -27,103 +27,70 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.amarine.R
-import com.app.amarine.RetrofitClient
 import com.app.amarine.UserPreferences
-import com.app.amarine.model.LoginRequest
-import com.app.amarine.model.LoginResponse
-import com.app.amarine.model.UserData
 import com.app.amarine.ui.components.MyPrimaryButton
 import com.app.amarine.ui.components.MyTextField
 import com.app.amarine.ui.navigation.Screen
 import com.app.amarine.ui.theme.AmarineTheme
 import com.app.amarine.ui.theme.Error
 import com.app.amarine.ui.theme.Primary
-import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import com.app.amarine.ui.screen.login.LoginViewModelV2
 
 @Composable
 fun LoginScreen(
     navController: NavController,
+    viewModel: LoginViewModelV2 = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
+    val loginState by viewModel.loginState.collectAsState()
+
+    // Observe login state
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is LoginState.Success -> {
+                val userData = (loginState as LoginState.Success).data.data
+                if (userData != null) {
+                    userPreferences.saveUser(
+                        id = userData.id,
+                        email = userData.email,
+                        nama = userData.nama,
+                        nelayanId = userData.nelayanId ?: 0
+                    )
+                }
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
+                }
+                Toast.makeText(context, "Login berhasil!", Toast.LENGTH_SHORT).show()
+            }
+            is LoginState.Error -> {
+                errorMessage = (loginState as LoginState.Error).message
+            }
+            else -> {}
+        }
+    }
 
     LoginContent(
         email = email,
         password = password,
         errorMessage = errorMessage,
-        isLoading = isLoading,
+        isLoading = loginState is LoginState.Loading,
         onEmailChange = { email = it },
         onPasswordChange = { password = it },
         onLoginClick = {
             errorMessage = null
-            isLoading = true
-
             when {
                 email.isBlank() || password.isBlank() -> {
                     errorMessage = "Email dan password harus diisi!"
-                    isLoading = false
                 }
                 else -> {
-                    val loginRequest = LoginRequest(
-                        email = email,
-                        password = password
-                    )
-                    val call = RetrofitClient.instance.login(loginRequest)
-
-                    call.enqueue(object : Callback<LoginResponse> {
-                        override fun onResponse(
-                            call: Call<LoginResponse>,
-                            response: Response<LoginResponse>
-                        ) {
-                            isLoading = false
-                            Log.d("LoginScreen", "Response Code: ${response.code()}")
-                            Log.d("LoginScreen", "Raw Response: ${response.raw()}")
-
-                            if (response.isSuccessful && response.body() != null) {
-                                // Simpan data user
-                                val userData = response.body()?.data
-                                if (userData != null) {
-                                    userPreferences.saveUser(
-                                        id = userData.id,
-                                        email = userData.email,
-                                        nama = userData.nama
-                                    )
-                                }
-
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(Screen.Login.route) { inclusive = true }
-                                }
-                                Toast.makeText(context, "Login berhasil!", Toast.LENGTH_SHORT).show()
-                            } else {
-                                val errorBody = response.errorBody()?.string()
-                                try {
-                                    if (errorBody != null) {
-                                        val errorJson = JSONObject(errorBody)
-                                        errorMessage = errorJson.getString("error")
-                                    } else {
-                                        errorMessage = "Email atau password salah!"
-                                    }
-                                } catch (e: Exception) {
-                                    errorMessage = "Email atau password salah!"
-                                }
-                            }
-                        }
-
-                        override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                            isLoading = false
-                            errorMessage = "Gagal terhubung ke server. Silakan coba lagi."
-                            Log.e("LoginScreen", "Network Error: ${t.message}", t)
-                        }
-                    })
+                    viewModel.login(email, password)
                 }
             }
         },
@@ -213,7 +180,7 @@ fun LoginContent(
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         imageVector = if (passwordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                        contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password"
                     )
                 }
             },
@@ -289,7 +256,7 @@ fun LoginContent(
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_google),
-                contentDescription = "Google Sign In",
+                contentDescription = "Login dengan Google",
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))

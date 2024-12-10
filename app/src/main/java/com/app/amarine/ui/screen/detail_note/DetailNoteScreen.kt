@@ -1,5 +1,6 @@
 package com.app.amarine.ui.screen.detail_note
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,41 +15,139 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.app.amarine.R
+import com.app.amarine.detail_note.DetailNoteViewModel
 import com.app.amarine.model.Note
 import com.app.amarine.ui.components.MyTopAppBar
 import com.app.amarine.ui.navigation.Screen
 import com.app.amarine.ui.theme.Primary200
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
 
 private val CardBackground = Color(0xFFFFF3E0)
 
+private fun String.formatDateTime(): String {
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val date = inputFormat.parse(this)
+        val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id"))
+        date?.let { outputFormat.format(it) } ?: this
+    } catch (e: Exception) {
+        this
+    }
+}
+
+private fun String.formatTime(): String {
+    return try {
+        val inputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val time = inputFormat.parse(this)
+        val outputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        time?.let { outputFormat.format(it) } ?: this
+    } catch (e: Exception) {
+        this
+    }
+}
+
 @Composable
 fun DetailNoteScreen(
-    note: Note?,
-    navController: NavController
+    noteId: Int,
+    navController: NavController,
+    viewModel: DetailNoteViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val noteState by viewModel.noteState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val deleteNoteState by viewModel.deleteNoteState.collectAsState()
     var isShowDialog by remember { mutableStateOf(false) }
 
-    DetailNoteContent(
-        note = note,
-        onNavigateUp = { navController.navigateUp() },
-        onDelete = { isShowDialog = true },
-        onEdit = {
-            navController.currentBackStackEntry?.savedStateHandle?.set("note", it)
-            navController.navigate(Screen.EditNote.route)
+    LaunchedEffect(noteId) {
+        viewModel.getDetailNote(noteId)
+    }
+
+    LaunchedEffect(deleteNoteState) {
+        when (deleteNoteState) {
+            is DetailNoteViewModel.Result.Success -> {
+                isShowDialog = true
+            }
+            is DetailNoteViewModel.Result.Error -> {
+                // Handle error
+            }
+            else -> {}
         }
-    )
+    }
+
+    LaunchedEffect(Unit) {
+        navController.currentBackStackEntry?.savedStateHandle?.get<Boolean>("refresh")?.let {
+            if (it) {
+                viewModel.getDetailNote(noteId)
+                navController.currentBackStackEntry?.savedStateHandle?.remove<Boolean>("refresh")
+            }
+        }
+    }
+
+    Scaffold { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when {
+                isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                error != null -> {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = error ?: "Terjadi kesalahan",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                        Button(
+                            onClick = { viewModel.getDetailNote(noteId) },
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Text("Coba Lagi")
+                        }
+                    }
+                }
+                else -> {
+                    DetailNoteContent(
+                        note = noteState,
+                        onNavigateUp = { navController.navigateUp() },
+                        onDelete = { viewModel.deleteNote(noteId) },
+                        onEdit = {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("note", it)
+                            navController.navigate(Screen.EditNote.route)
+                        }
+                    )
+                }
+            }
+        }
+    }
 
     if (isShowDialog) {
         ResetSuccessDialog(
@@ -84,7 +183,7 @@ fun DetailNoteContent(
                     IconButton(onClick = onNavigateUp) {
                         Icon(
                             imageVector = Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = null,
+                            contentDescription = "Kembali"
                         )
                     }
                 },
@@ -93,7 +192,7 @@ fun DetailNoteContent(
                         Icon(
                             imageVector = Icons.Rounded.MoreVert,
                             tint = Color.White,
-                            contentDescription = null,
+                            contentDescription = "Menu"
                         )
                     }
                 }
@@ -123,7 +222,7 @@ fun DetailNoteContent(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Edit,
-                                    contentDescription = null,
+                                    contentDescription = "Edit",
                                     tint = Color.Black
                                 )
                                 Text(
@@ -149,7 +248,7 @@ fun DetailNoteContent(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Delete,
-                                    contentDescription = null,
+                                    contentDescription = "Hapus",
                                     tint = Color.Red
                                 )
                                 Text(
@@ -173,22 +272,34 @@ fun DetailNoteContent(
             DeleteItemDialog(
                 showDialog = showDeleteDialog,
                 onDeleteConfirmed = onDelete,
-                onDismiss = { showMenu.value = false }
+                onDismiss = { showDeleteDialog.value = false }
             )
 
+            val imageUrl = if (!note?.gambar.isNullOrEmpty()) {
+                "http://10.0.2.2:3000${note?.gambar}"
+            } else {
+                null
+            }
+
             AsyncImage(
-                model = note?.imageResourceId,
-                contentDescription = null,
+                model = imageUrl ?: R.drawable.ic_note_default,
+                contentDescription = "Gambar ${note?.nama}",
+                contentScale = ContentScale.Crop,
+                error = painterResource(id = R.drawable.ic_note_default),
+                placeholder = painterResource(id = R.drawable.ic_note_default),
                 modifier = Modifier
                     .padding(top = 16.dp)
+                    .fillMaxWidth()
+                    .height(200.dp)
                     .clip(MaterialTheme.shapes.large)
                     .border(2.dp, Primary200, MaterialTheme.shapes.large)
             )
 
             Text(
-                text = note?.name.toString(),
+                text = note?.nama ?: "-",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
                 )
             )
 
@@ -201,11 +312,12 @@ fun DetailNoteContent(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.padding(20.dp)
                 ) {
-                    DetailItem(label = "Jenis", value = note?.type ?: "-")
-                    DetailItem(label = "Berat", value = "${note?.weight} Kg")
-                    DetailItem(label = "Tanggal", value = note?.date ?: "-")
-                    DetailItem(label = "Lokasi Penyimpanan", value = note?.storageLocation ?: "-")
-                    DetailItem(label = "Catatan", value = note?.note ?: "-", isMultiLine = true)
+                    DetailItem(label = "Jenis", value = note?.jenis ?: "-")
+                    DetailItem(label = "Berat", value = "${note?.berat} Kg")
+                    DetailItem(label = "Tanggal", value = note?.tanggal?.formatDateTime() ?: "-")
+                    DetailItem(label = "Waktu", value = note?.waktu?.formatTime() ?: "-")
+                    DetailItem(label = "Lokasi Penyimpanan", value = note?.lokasi_penyimpanan ?: "-")
+                    DetailItem(label = "Catatan", value = note?.catatan ?: "-", isMultiLine = true)
                 }
             }
         }
@@ -233,14 +345,17 @@ private fun DetailItem(
             if (isMultiLine) {
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 14.sp
+                    ),
                     modifier = Modifier.padding(top = 4.dp)
                 )
             } else {
                 Text(
                     text = value,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp
                     )
                 )
             }
@@ -264,7 +379,7 @@ fun DeleteItemDialog(
             icon = {
                 Icon(
                     imageVector = Icons.Rounded.Warning,
-                    contentDescription = null,
+                    contentDescription = "Warning",
                     tint = Color.Red,
                     modifier = Modifier.size(48.dp)
                 )
@@ -349,7 +464,7 @@ fun DeleteItemDialog(
 @Composable
 fun ResetSuccessDialog(
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val dismiss by rememberUpdatedState(newValue = onDismiss)
     LaunchedEffect(key1 = dismiss) {
@@ -369,11 +484,11 @@ fun ResetSuccessDialog(
                 modifier = Modifier
                     .padding(24.dp)
                     .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
                     imageVector = ImageVector.vectorResource(id = R.drawable.ic_success),
-                    contentDescription = null,
+                    contentDescription = "Success Icon",
                     modifier = Modifier.size(88.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -390,7 +505,7 @@ fun ResetSuccessDialog(
                 Text(
                     text = "Catatan Berhasil Dihapus",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        textAlign = TextAlign.Center,
+                        textAlign = TextAlign.Center
                     ),
                     modifier = Modifier
                         .fillMaxWidth()

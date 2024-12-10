@@ -30,7 +30,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.app.amarine.model.Member
 import com.app.amarine.ui.components.MyTopAppBar
-import com.app.amarine.ui.screen.add_note.AddNoteContent
 import com.app.amarine.ui.theme.AmarineTheme
 import com.app.amarine.ui.theme.Primary200
 

@@ -21,27 +21,83 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import com.app.amarine.ApiService
 import com.app.amarine.R
-import com.app.amarine.RetrofitClient
 import com.app.amarine.model.RegisterRequest
 import com.app.amarine.model.RegisterResponse
 import com.app.amarine.ui.components.MyPrimaryButton
 import com.app.amarine.ui.components.MyTextField
 import com.app.amarine.ui.theme.Primary
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.json.JSONObject
+import javax.inject.Inject
+
+@HiltViewModel
+class RegisterViewModel @Inject constructor(
+    private val apiService: ApiService
+) : ViewModel() {
+    private val _registerState = MutableStateFlow<Result<RegisterResponse>>(Result.Initial)
+    val registerState: StateFlow<Result<RegisterResponse>> = _registerState.asStateFlow()
+
+    fun register(email: String, password: String, nama: String) {
+        viewModelScope.launch {
+            try {
+                _registerState.value = Result.Loading
+                val registerRequest = RegisterRequest(
+                    email = email,
+                    password = password,
+                    nama = nama
+                )
+                val response = apiService.register(registerRequest)
+
+                if (response.isSuccessful && response.body() != null) {
+                    _registerState.value = Result.Success(response.body()!!)
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    _registerState.value = Result.Error(
+                        try {
+                            JSONObject(errorBody ?: "").getString("error")
+                        } catch (e: Exception) {
+                            "Terjadi kesalahan tidak diketahui"
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                _registerState.value = Result.Error("Gagal terhubung ke server. Silakan coba lagi.")
+            }
+        }
+    }
+}
+
+sealed class Result<out T> {
+    object Initial : Result<Nothing>()
+    object Loading : Result<Nothing>()
+    data class Success<T>(val data: T) : Result<T>()
+    data class Error(val message: String) : Result<Nothing>()
+}
 
 @Composable
-fun RegisterScreen(navController: NavController) {
+fun RegisterScreen(
+    navController: NavController,
+    viewModel: RegisterViewModel = hiltViewModel()
+) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showSuccessDialog by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
 
-    // Dialog sukses
+    val registerState = viewModel.registerState.collectAsState().value
+
     if (showSuccessDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -65,56 +121,15 @@ fun RegisterScreen(navController: NavController) {
         )
     }
 
-    val onRegisterClick: () -> Unit = {
-        errorMessage = null
-        isLoading = true
-
-        when {
-            name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
-                errorMessage = "Semua field harus diisi!"
-                isLoading = false
+    LaunchedEffect(registerState) {
+        when (registerState) {
+            is Result.Success -> {
+                showSuccessDialog = true
             }
-            password != confirmPassword -> {
-                errorMessage = "Password dan Konfirmasi Password tidak cocok!"
-                isLoading = false
+            is Result.Error -> {
+                errorMessage = registerState.message
             }
-            else -> {
-                val registerRequest = RegisterRequest(
-                    email = email,
-                    password = password,
-                    nama = name
-                )
-                val call = RetrofitClient.instance.register(registerRequest)
-
-                call.enqueue(object : retrofit2.Callback<RegisterResponse> {
-                    override fun onResponse(
-                        call: retrofit2.Call<RegisterResponse>,
-                        response: retrofit2.Response<RegisterResponse>
-                    ) {
-                        isLoading = false
-
-                        if (response.isSuccessful) {
-                            showSuccessDialog = true
-                        } else {
-                            try {
-                                // Parse error message from response body
-                                val errorBody = response.errorBody()?.string()
-                                val errorJson = JSONObject(errorBody ?: "")
-                                errorMessage = errorJson.getString("error")
-                            } catch (e: Exception) {
-                                errorMessage = "Terjadi kesalahan tidak diketahui"
-                                Log.e("RegisterScreen", "Error parsing error response: ${e.message}")
-                            }
-                        }
-                    }
-
-                    override fun onFailure(call: retrofit2.Call<RegisterResponse>, t: Throwable) {
-                        isLoading = false
-                        errorMessage = "Gagal terhubung ke server. Silakan coba lagi."
-                        Log.e("RegisterScreen", "Network error: ${t.message}")
-                    }
-                })
-            }
+            else -> {}
         }
     }
 
@@ -124,12 +139,25 @@ fun RegisterScreen(navController: NavController) {
         password = password,
         confirmPassword = confirmPassword,
         errorMessage = errorMessage,
-        isLoading = isLoading,
+        isLoading = registerState is Result.Loading,
         onEmailChange = { email = it },
         onNameChange = { name = it },
         onPasswordChange = { password = it },
         onConfirmPasswordChange = { confirmPassword = it },
-        onRegisterClick = onRegisterClick,
+        onRegisterClick = {
+            errorMessage = null
+            when {
+                name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
+                    errorMessage = "Semua field harus diisi!"
+                }
+                password != confirmPassword -> {
+                    errorMessage = "Password dan Konfirmasi Password tidak cocok!"
+                }
+                else -> {
+                    viewModel.register(email, password, name)
+                }
+            }
+        },
         onLoginClick = {
             navController.navigate("login") {
                 popUpTo("register") { inclusive = true }
@@ -218,7 +246,7 @@ fun RegisterContent(
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         imageVector = if (passwordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                        contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password"
                     )
                 }
             },
@@ -237,7 +265,7 @@ fun RegisterContent(
                 IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                     Icon(
                         imageVector = if (confirmPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                        contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password"
+                        contentDescription = if (confirmPasswordVisible) "Sembunyikan password" else "Tampilkan password"
                     )
                 }
             },

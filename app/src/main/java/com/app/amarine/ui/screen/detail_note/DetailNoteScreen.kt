@@ -38,28 +38,49 @@ import com.app.amarine.ui.theme.Primary200
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 import kotlin.time.Duration.Companion.seconds
 
 private val CardBackground = Color(0xFFFFF3E0)
 
 private fun String.formatDateTime(): String {
     return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        // Menggunakan format ISO 8601 untuk parsing input
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC") // Karena input dalam UTC (ditandai dengan Z)
+        }
         val date = inputFormat.parse(this)
-        val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id"))
-        date?.let { outputFormat.format(it) } ?: this
+
+        // Format output tetap sama tapi menggunakan timezone lokal
+        val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id")).apply {
+            timeZone = TimeZone.getDefault()
+        }
+
+        val result = date?.let { outputFormat.format(it) } ?: this
+        Log.d("DEBUG_DATE", "Raw date: $this, Formatted date: $result")
+        result
     } catch (e: Exception) {
+        Log.e("DEBUG_DATE", "Error formatting date: $this", e)
         this
     }
 }
 
 private fun String.formatTime(): String {
     return try {
-        val inputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val inputFormat = SimpleDateFormat("HH:mm", Locale.US).apply {
+            timeZone = TimeZone.getDefault()
+        }
         val time = inputFormat.parse(this)
-        val outputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-        time?.let { outputFormat.format(it) } ?: this
+
+        val outputFormat = SimpleDateFormat("HH:mm", Locale.US).apply {
+            timeZone = TimeZone.getDefault()
+        }
+
+        val result = time?.let { outputFormat.format(it) } ?: this
+        Log.d("DEBUG_TIME", "Raw time: $this, Formatted time: $result")
+        result
     } catch (e: Exception) {
+        Log.e("DEBUG_TIME", "Error formatting time: $this", e)
         this
     }
 }

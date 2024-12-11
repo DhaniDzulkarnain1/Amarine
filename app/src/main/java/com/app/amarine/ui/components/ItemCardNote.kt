@@ -17,43 +17,53 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.app.amarine.R
 import com.app.amarine.model.Note
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
-private fun getTimeAgo(dateString: String, timeString: String): String {
-    try {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-        val currentDate = Date()
-        val date = dateFormat.parse("$dateString $timeString")
-
-        if (date != null) {
-            val diffInMillis = currentDate.time - date.time
-            val diffInSeconds = diffInMillis / 1000
-            val diffInMinutes = diffInSeconds / 60
-            val diffInHours = diffInMinutes / 60
-            val diffInDays = diffInHours / 24
-
-            return when {
-                diffInSeconds < 60 -> "Baru saja"
-                diffInMinutes < 60 -> "${diffInMinutes.toInt()} menit yang lalu"
-                diffInHours < 24 -> "${diffInHours.toInt()} jam yang lalu"
-                diffInDays == 1L -> "Kemarin"
-                diffInDays < 7 -> "$diffInDays hari yang lalu"
-                else -> {
-                    val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id"))
-                    outputFormat.format(date)
-                }
-            }
+private fun String.formatDateTime(): String {
+    return try {
+        // Menggunakan format ISO 8601 untuk parsing input
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC") // Karena input dalam UTC (ditandai dengan Z)
         }
+        val date = inputFormat.parse(this)
+
+        // Format output tetap sama tapi menggunakan timezone lokal
+        val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id")).apply {
+            timeZone = TimeZone.getDefault()
+        }
+
+        val result = date?.let { outputFormat.format(it) } ?: this
+        Log.d("DEBUG_DATE", "Raw date: $this, Formatted date: $result")
+        result
     } catch (e: Exception) {
-        Log.e("TimeAgo", "Error calculating time ago", e)
+        Log.e("DEBUG_DATE", "Error formatting date: $this", e)
+        this
     }
-    return "Baru saja" // default fallback
+}
+
+private fun String.formatTime(): String {
+    return try {
+        val inputFormat = SimpleDateFormat("HH:mm", Locale.US).apply {
+            timeZone = TimeZone.getDefault()
+        }
+        val time = inputFormat.parse(this)
+
+        val outputFormat = SimpleDateFormat("HH:mm", Locale.US).apply {
+            timeZone = TimeZone.getDefault()
+        }
+
+        val result = time?.let { outputFormat.format(it) } ?: this
+        Log.d("DEBUG_TIME", "Raw time: $this, Formatted time: $result")
+        result
+    } catch (e: Exception) {
+        Log.e("DEBUG_TIME", "Error formatting time: $this", e)
+        this
+    }
 }
 
 @Composable
@@ -122,25 +132,38 @@ fun ItemCardNote(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = note.nama,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
+                Column {
+                    Text(
+                        text = note.nama,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
 
                 Text(
-                    text = getTimeAgo(note.tanggal, note.waktu),
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp
-                    ),
-                    modifier = Modifier.padding(start = 8.dp)
+                    text = note.tanggal.formatDateTime(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Spacer(modifier = Modifier.width(0.dp))
+            }
+
+            note.catatan?.let { catatan ->
+                if (catatan.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
         }
     }

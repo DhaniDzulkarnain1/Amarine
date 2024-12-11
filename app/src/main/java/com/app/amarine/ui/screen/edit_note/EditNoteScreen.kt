@@ -34,11 +34,56 @@ import com.app.amarine.model.Note
 import com.app.amarine.model.Result
 import com.app.amarine.ui.components.MyTopAppBar
 import com.app.amarine.ui.theme.Primary200
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 private val CardBackground = Color(0xFFFFF3E0)
 private val TextFieldBorder = Color(0xFF424242)
 private val ErrorRed = Color(0xFFD32F2F)
 private val BrandOrange = Color(0xFFFF5722)
+
+private fun String.formatDateTime(): String {
+    return try {
+        // Menggunakan format ISO 8601 untuk parsing input
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        val date = inputFormat.parse(this)
+
+        // Format output tetap sama tapi menggunakan timezone lokal
+        val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id")).apply {
+            timeZone = TimeZone.getDefault()
+        }
+
+        val result = date?.let { outputFormat.format(it) } ?: this
+        Log.d("DEBUG_DATE", "Raw date: $this, Formatted date: $result")
+        result
+    } catch (e: Exception) {
+        Log.e("DEBUG_DATE", "Error formatting date: $this", e)
+        this
+    }
+}
+
+private fun String.formatTime(): String {
+    return try {
+        val inputFormat = SimpleDateFormat("HH:mm", Locale.US).apply {
+            timeZone = TimeZone.getDefault()
+        }
+        val time = inputFormat.parse(this)
+
+        val outputFormat = SimpleDateFormat("HH:mm", Locale.US).apply {
+            timeZone = TimeZone.getDefault()
+        }
+
+        val result = time?.let { outputFormat.format(it) } ?: this
+        Log.d("DEBUG_TIME", "Raw time: $this, Formatted time: $result")
+        result
+    } catch (e: Exception) {
+        Log.e("DEBUG_TIME", "Error formatting time: $this", e)
+        this
+    }
+}
 
 @Composable
 fun EditNoteScreen(
@@ -62,8 +107,8 @@ fun EditNoteScreen(
     var nama by remember { mutableStateOf(note?.nama ?: "") }
     var jenis by remember { mutableStateOf(note?.jenis ?: "") }
     var berat by remember { mutableStateOf(note?.berat?.toString() ?: "") }
-    var tanggal by remember { mutableStateOf(note?.tanggal ?: "") }
-    var waktu by remember { mutableStateOf(note?.waktu ?: "") }
+    var tanggal by remember { mutableStateOf(note?.tanggal?.formatDateTime() ?: "") }
+    var waktu by remember { mutableStateOf(note?.waktu?.formatTime() ?: "") }
     var lokasiPenyimpanan by remember { mutableStateOf(note?.lokasi_penyimpanan ?: "") }
     var catatan by remember { mutableStateOf(note?.catatan ?: "") }
 

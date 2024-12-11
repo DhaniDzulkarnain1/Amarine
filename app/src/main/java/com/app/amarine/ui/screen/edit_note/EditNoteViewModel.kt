@@ -59,12 +59,13 @@ class EditNoteViewModel @Inject constructor(
 
                 // Format tanggal ke YYYY-MM-DD
                 val formattedTanggal = try {
-                    val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-                    val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                    // Mari ubah ini karena tanggal yang kita terima sekarang dalam format "dd MMM yyyy"
+                    val inputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id"))
                     val date = inputFormat.parse(tanggal)
+                    val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
                     outputFormat.format(date!!)
                 } catch (e: Exception) {
-                    Log.e("EditNoteViewModel", "Error formatting date", e)
+                    Log.e("EditNoteViewModel", "Error formatting date: $tanggal", e)
                     tanggal
                 }
 

@@ -13,6 +13,7 @@ interface ApiService {
     @POST("masuk")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
 
+    // Bagian CRUD Pencatatan - TIDAK DIUBAH
     @Multipart
     @POST("pencatatan")
     suspend fun addNote(
@@ -50,4 +51,17 @@ interface ApiService {
 
     @DELETE("pencatatan/{id}")
     suspend fun deleteNote(@Path("id") id: Int): Response<BaseResponse<Unit>>
+
+    // Endpoint untuk stok
+    @GET("stok")
+    suspend fun getStocks(): Response<BaseResponse<List<Stock>>>
+
+    @GET("stok/detail/{nama}")
+    suspend fun getStockDetail(@Path("nama") nama: String): Response<BaseResponse<Stock>>
+
+    @PUT("stok/{id}")
+    suspend fun updateStock(
+        @Path("id") id: Int,
+        @Body stock: Stock
+    ): Response<BaseResponse<Stock>>
 }

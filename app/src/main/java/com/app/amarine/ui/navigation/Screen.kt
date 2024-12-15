@@ -28,8 +28,8 @@ sealed class Screen(val route: String) {
     }
     data object EditNote : Screen("edit_note")
 
-    data object DetailStock : Screen("detail_stock/{stockId}") {
-        fun createRoute(stockId: Int) = "detail_stock/$stockId"
+    data object DetailStock : Screen("detail_stock/{stockName}") {
+        fun createRoute(stockName: String) = "detail_stock/$stockName"
     }
 
     data object DetailAnggota : Screen("detail_anggota/{anggotaId}") {

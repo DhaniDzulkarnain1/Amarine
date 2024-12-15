@@ -2,27 +2,64 @@ package com.app.amarine.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Parcelize
 data class Stock(
     val id: Int,
-    val type: String,
-    val detail: List<DetailStock>,
-    val available: Int = if (detail.isNotEmpty()) detail.last().available else 0 // Fallback untuk daftar kosong
+    val nama: String,
+    val jenis: String,
+    val kuantitas: Int = 0,
+    val type: String = nama,
+    val detail: List<DetailStock> = listOf(
+        DetailStock(
+            date = getCurrentDate(),
+            enter = kuantitas,
+            sold = 0,
+            available = kuantitas
+        )
+    ),
+    val available: Int = kuantitas,
+    val tanggal: String? = null,
+    val waktu: String? = null,
+    val lokasi_penyimpanan: String? = null
 ) : Parcelable
 
 @Parcelize
 data class DetailStock(
     val date: String,
-    val enter: Int,
-    val sold: Int,
-    val available: Int
+    val enter: Int = 0,
+    val sold: Int = 0,
+    val available: Int = 0
 ) : Parcelable
 
+@Parcelize
+data class StockResponse(
+    val status: Boolean,
+    val message: String,
+    val data: List<Stock>
+) : Parcelable
+
+sealed class StockState {
+    object Loading : StockState()
+    data class Success(val data: List<Stock>) : StockState()
+    data class Error(val message: String) : StockState()
+}
+
+private fun getCurrentDate(): String {
+    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    return dateFormat.format(Date())
+}
+
+// Data dummy untuk testing
 val stocks = listOf(
     Stock(
         id = 0,
-        type = "Ikan Nila",
+        nama = "Ikan Nila",
+        jenis = "Ikan",
+        kuantitas = 13,
         detail = listOf(
             DetailStock(
                 date = "7-11-2024",
@@ -41,12 +78,14 @@ val stocks = listOf(
                 enter = 0,
                 sold = 12,
                 available = 13
-            ),
+            )
         )
     ),
     Stock(
         id = 1,
-        type = "Ikan Kerapu",
+        nama = "Ikan Kerapu",
+        jenis = "Ikan",
+        kuantitas = 17,
         detail = listOf(
             DetailStock(
                 date = "8-11-2024",
@@ -65,12 +104,14 @@ val stocks = listOf(
                 enter = 10,
                 sold = 8,
                 available = 17
-            ),
+            )
         )
     ),
     Stock(
         id = 2,
-        type = "Ikan Bawal",
+        nama = "Ikan Bawal",
+        jenis = "Ikan",
+        kuantitas = 21,
         detail = listOf(
             DetailStock(
                 date = "9-11-2024",
@@ -83,12 +124,14 @@ val stocks = listOf(
                 enter = 5,
                 sold = 10,
                 available = 21
-            ),
+            )
         )
     ),
     Stock(
         id = 3,
-        type = "Ikan Tongkol",
+        nama = "Ikan Tongkol",
+        jenis = "Ikan",
+        kuantitas = 15,
         detail = listOf(
             DetailStock(
                 date = "3-11-2024",
@@ -119,12 +162,14 @@ val stocks = listOf(
                 enter = 30,
                 sold = 15,
                 available = 15
-            ),
+            )
         )
     ),
     Stock(
         id = 4,
-        type = "Sotong",
+        nama = "Sotong",
+        jenis = "Ikan",
+        kuantitas = 11,
         detail = listOf(
             DetailStock(
                 date = "3-11-2024",
@@ -137,7 +182,7 @@ val stocks = listOf(
                 enter = 10,
                 sold = 2,
                 available = 11
-            ),
+            )
         )
-    ),
+    )
 )
